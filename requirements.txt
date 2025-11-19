@@ -106,6 +106,10 @@ threadpoolctl==3.6.0
 tomli==2.3.0
 torch==2.8.0
 torch-geometric==2.7.0
+torch_cluster==1.6.3+pt28cpu
+torch_scatter==2.1.2+pt28cpu
+torch_sparse==0.6.18+pt28cpu
+torch_spline_conv==1.2.2+pt28cpu
 tqdm==4.67.1
 triton==3.4.0
 typing-inspection==0.4.2

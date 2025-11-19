@@ -121,7 +121,7 @@ class MLPPreprocessor(BasePreprocessor):
         # MLP doesn't need graph transforms
         super().__init__(transform=None, **kwargs)
 
-    def _get_dataset(self, dataset, is_inference):
+    def _get_dataset(self, dataset, is_inference): # better namimg?????
         """Extracts atomic numbers (z) and (optionally) the target (y)."""
         
         # We assume the base dataset returns Data objects, and we create new ones

@@ -7,27 +7,41 @@ from .registry import PreprocessorRegistry
 class GCNPreprocessor(BasePreprocessor):
     def __init__(self, **kwargs):
         # Get user-supplied transform or use the default RadiusGraph
-        transform = kwargs.pop("transform", RadiusGraph(r=1.5))
+        radius = kwargs.pop("radius", 1.5)   # extracted only for GCN
+        transform = RadiusGraph(r=radius)
         super().__init__(transform=transform, **kwargs)
 
+
+
     def _format_dataset(self, dataset, is_inference):
-        """Extracts atomic numbers (z), edge_index, and (optionally) the target (y)."""
+        """Extracts atomic numbers (z) and (optionally) the target (y)."""
+
         target_col = self.target
-        if is_inference:
-            return [
-                type(d)(z=d.z, pos=d.pos, edge_index=d.edge_index)
-                for d in dataset
-            ]
-        else:
-            return [
-                type(d)(
-                    z=d.z,
-                    pos=d.pos,
-                    edge_index=d.edge_index,
-                    y=d.y[:, target_col].unsqueeze(1)
-                )
-                for d in dataset
-            ]
+
+        out = []
+
+        for d in dataset:
+            d_new = d.clone()
+
+            # remove unwanted fields
+            for field in ["x", "edge_attr", "name", "smiles", "idx"]:
+                if hasattr(d_new, field):
+                    delattr(d_new, field)
+
+            # Handle inference/no-inference target
+            if not is_inference:
+                d_new.y = d.y[:, target_col].unsqueeze(1)
+            else:
+                if hasattr(d_new, "y"):
+                    delattr(d_new, "y")
+
+            out.append(d_new)
+
+        return out
+
+
+
+
 
 
 """

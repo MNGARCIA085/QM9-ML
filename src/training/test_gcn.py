@@ -20,7 +20,11 @@ def loaders():
 	print(DATA_DIR)
 
 
+
+
+
 	model_type = 'gcn'
+	# args -> depending on the model
 
 
 	prep = PreprocessorRegistry.create(
@@ -28,6 +32,7 @@ def loaders():
 	    target=0,
 	    root=DATA_DIR,
 	    subset=1000,
+	    # kwargs
 	)
 
 	train_ds, val_ds = prep.preprocess()

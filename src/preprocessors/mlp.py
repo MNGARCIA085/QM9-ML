@@ -10,38 +10,34 @@ class MLPPreprocessor(BasePreprocessor):
         super().__init__(transform=None, **kwargs)
 
 
-    """
-    def _format_dataset(self, dataset, is_inference): # better namimg?????
-        Extracts atomic numbers (z) and (optionally) the target (y).
-        
-        # We assume the base dataset returns Data objects, and we create new ones
-        # with only the necessary features (z for MLP input).
-        
-        if is_inference:
-            return [type(d)(z=d.z) for d in dataset]
-        else:
-            # Safely slice the target column and unsqueeze for correct shape
-            target_col = self.target
-            return [type(d)(z=d.z, y=d.y[:, target_col].unsqueeze(1)) for d in dataset]
-    """
-
     def _format_dataset(self, dataset, is_inference):
+        """Extracts atomic numbers (z) and (optionally) the target (y)."""
+
         target_col = self.target
+
         out = []
 
         for d in dataset:
-            d_new = d.clone()        # keeps num_nodes, graph structure, internal indexing
+            d_new = d.clone()
 
-            # overwrite fields you want to keep
-            d_new.z = d.z
-            
+            # remove unwanted fields
+            for field in ["x", "edge_attr", "edge_index", "pos","name", "smiles", "idx"]:
+                if hasattr(d_new, field):
+                    delattr(d_new, field)
+
+            # Explicitly set num_nodes
+            d_new.num_nodes = d.z.size(0)
+
+            # Handle inference/no-inference target
             if not is_inference:
                 d_new.y = d.y[:, target_col].unsqueeze(1)
             else:
                 if hasattr(d_new, "y"):
-                    del d_new.y
+                    delattr(d_new, "y")
 
             out.append(d_new)
 
         return out
+
+
 

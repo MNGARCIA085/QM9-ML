@@ -28,11 +28,22 @@ def loaders():
 	    target=0,
 	    root=DATA_DIR,
 	    subset=1000,
+	    cutoff=2.0,
 	)
 
 	train_ds, val_ds = prep.preprocess()
 	train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
 	val_loader = DataLoader(val_ds, batch_size=64)
+
+
+	for t in train_ds:
+		print(t)
+		break
+
+	for t in train_loader:
+		print(t)
+		break
+
 	return train_loader, val_loader
 
 
@@ -154,3 +165,7 @@ def main():
 
 if __name__==main():
 	main()
+
+
+
+

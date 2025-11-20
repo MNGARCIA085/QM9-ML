@@ -7,6 +7,7 @@ class SchNetPreprocessor(BasePreprocessor):
         # SchNet often handles connectivity internally (e.g., using radius graph
         # and pos), so we might not need an explicit transform here, depending on 
         # how the model is implemented. Sticking with None for consistency.
+        cutoff = kwargs.pop("cutoff", 10.0)
         super().__init__(transform=None, **kwargs)
         
     

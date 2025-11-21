@@ -1,6 +1,3 @@
-
-
-
 class PreprocessorRegistry:
     _registry = {}
 
@@ -17,6 +14,13 @@ class PreprocessorRegistry:
             raise ValueError(f"Unknown preprocessor: {name}")
         return cls._registry[name](**kwargs)
 
+
+
+
+
+
+
+#https://www.abhik.xyz/articles/registry-pattern
 
 """
 prep = PreprocessorRegistry.create(model_type="gcn", target=1)

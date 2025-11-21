@@ -119,7 +119,7 @@ def main():
 	# Train for a few epochs
 	for epoch in range(3):
 	    train_loss = run_epoch(train_loader, model_mlp, criterion, optimizer)
-	    val_loss = run_epoch(val_loader, model_mlp, criterion)
+	    val_loss = run_epoch(val_loader, model_mlp, criterion) # no optim, but later divide by a flag (train true or not)
 	    print(f"[MLP] Epoch {epoch} | Train {train_loss:.4f} | Val {val_loss:.4f}")
 
 

@@ -1,47 +1,72 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+#from torch.utils.data import DataLoader, TensorDataset
+
+from torch_geometric.loader import DataLoader
+from torch_geometric.nn import SchNet, GCNConv, global_mean_pool
+
 import numpy as np
 import ray
 from .base import BaseTuner
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
-from src.models.nnet import NNModel
-from src.utils.metrics import compute_metrics
-from src.utils.results import Results, Metrics
-from .callbacks import EarlyStopping,LRReducer
 
 
 
+class SimpleMLP(nn.Module):
+    def __init__(self, num_atom_types=100, hidden=64):
+        super().__init__()
+        self.emb = nn.Embedding(num_atom_types, hidden)
+        self.fc = nn.Sequential(
+            nn.Linear(hidden, hidden),
+            nn.ReLU(),
+            nn.Linear(hidden, 1)
+        )
+    def forward(self, batch):
+        x = self.emb(batch.z)       # [num_nodes, hidden]
+        x = global_mean_pool(x, batch.batch)  # [num_graphs, hidden]
+        out = self.fc(x)            # [num_graphs, 1]
+        return out
 
-class NNTuner(BaseTuner):
+
+
+class MLPTuner(BaseTuner):
     def __init__(self, train_ds, val_ds):
         super().__init__(train_ds, val_ds)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+
+
      # --- Data loaders ---
     def create_loaders(self, batch_size):
-        #train_ds = ray.get(self.X_train_id)
-        #val_ds = ray.get(self.y_train_id)
-        train_ds = self.train_ds
-        val_ds = self.val_ds
-
+        train_ds = ray.get(self.train_ds)
+        val_ds = ray.get(self.val_ds)
         train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
         val_loader = DataLoader(val_ds, batch_size=batch_size)
+
+
+
+        """
+        # with paths!!!!
+        train_path="data/QM9/qm9_subset_50.pt",
+        val_path="data/QM9/qm9_subset_50.pt" #chaneg later, are the same!!!
+        train_ds = torch.load(self.train_path)   # or use appropriate loader
+        val_ds = torch.load(self.val_path)
+        """
         
         return train_loader, val_loader
 
 
 
     # --- Training one epoch ---
-    def run_epoch(loader, model, criterion, optimizer=None):
+    def run_epoch(self, loader, model, criterion, optimizer=None):
         model.train() if optimizer else model.eval()
         total_loss = 0
 
         for batch in loader:
-            batch = batch.to(device)
+            batch = batch.to(self.device)
             out = model(batch)
             pred = out.view(-1)
             target = batch.y.view(-1)
@@ -63,12 +88,8 @@ class NNTuner(BaseTuner):
     def _train_model_ray(self, config):
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        # small subset for speed
-        subset = config["subset"]
-
-        train_loader, val_loader = loaders(
+        train_loader, val_loader = self.create_loaders(
             batch_size=config["batch_size"],
-            subset=subset
         )
 
         model = SimpleMLP(
@@ -76,12 +97,12 @@ class NNTuner(BaseTuner):
             hidden=config["hidden"]
         ).to(device)
 
-        optimizer = Adam(model.parameters(), lr=config["lr"])
-        criterion = MSELoss()
+        optimizer = optim.Adam(model.parameters(), lr=config["lr"])
+        criterion = nn.MSELoss()
 
         for epoch in range(config["epochs"]):
-            train_loss = run_epoch(train_loader, model, criterion, optimizer)
-            val_loss = run_epoch(val_loader, model, criterion)
+            train_loss = self.run_epoch(train_loader, model, criterion, optimizer)
+            val_loss = self.run_epoch(val_loader, model, criterion)
 
             # report to Ray Tune
             tune.report({"val_loss":val_loss})
@@ -95,8 +116,7 @@ class NNTuner(BaseTuner):
             "hidden": tune.choice([32, 64, 128]),
             "lr": tune.loguniform(1e-4, 1e-2),
             "batch_size": tune.choice([16, 32]),
-            "epochs": 3,
-            "subset": 10,        # only 10 samples → very fast tuning
+            "epochs": 5,
         }
 
 

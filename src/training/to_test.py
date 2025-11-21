@@ -27,7 +27,7 @@ def loaders():
 	    model_type,
 	    target=0,
 	    root=DATA_DIR,
-	    subset=1000,
+	    subset=150,
 	)
 
 	train_ds, val_ds = prep.preprocess()

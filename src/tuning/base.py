@@ -2,7 +2,7 @@ import ray
 from abc import ABC, abstractmethod
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
-from src.utils.results import Results, Metrics
+
 
 
 
@@ -13,11 +13,9 @@ class BaseTuner(ABC):
     """
 
     def __init__(self, train_ds, val_ds):
-        self.cfg = cfg
-        #self.train_ds = ray.put(train_ds)
-        #self.val_ds = ray.put(val_ds)
-        self.train_ds = train_ds
-        self.val_ds = val_ds
+        self.train_ds = ray.put(train_ds)
+        self.val_ds = ray.put(val_ds)
+
 
 
     # ---------------- Abstract methods ---------------- #
@@ -45,7 +43,7 @@ class BaseTuner(ABC):
         Subclasses provide _train_model_ray and get_tune_config.
         """
         config = self.get_tune_config()
-        scheduler = ASHAScheduler(metric="loss", mode="min")
+        scheduler = ASHAScheduler(metric="val_loss", mode="min")
 
         tuner = tune.Tuner(
             tune.with_parameters(self._train_model_ray),
@@ -56,7 +54,7 @@ class BaseTuner(ABC):
             )
         )
         results = tuner.fit()
-        best = results.get_best_result(metric="loss", mode="min")
+        best = results.get_best_result(metric="val_loss", mode="min")
         return best.config
 
 

@@ -1,19 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-#from torch.utils.data import DataLoader, TensorDataset
 
-from torch_geometric.loader import DataLoader
-from torch_geometric.nn import SchNet, GCNConv, global_mean_pool
-
-import numpy as np
-import ray
-from .base import BaseTuner
+from torch_geometric.nn import global_mean_pool
 from ray import tune
-from ray.tune.schedulers import ASHAScheduler
+
+from .base import BaseTuner
 
 
-
+# ---------------- Simple PYG MLP model ---------------- #
 class SimpleMLP(nn.Module):
     def __init__(self, num_atom_types=100, hidden=64):
         super().__init__()
@@ -23,78 +18,55 @@ class SimpleMLP(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden, 1)
         )
+
     def forward(self, batch):
-        x = self.emb(batch.z)       # [num_nodes, hidden]
-        x = global_mean_pool(x, batch.batch)  # [num_graphs, hidden]
-        out = self.fc(x)            # [num_graphs, 1]
-        return out
+        x = self.emb(batch.z)
+        x = global_mean_pool(x, batch.batch)
+        return self.fc(x).view(-1)
 
 
-
+# ---------------- Tuner ---------------- #
 class MLPTuner(BaseTuner):
+
     def __init__(self, train_ds, val_ds):
         super().__init__(train_ds, val_ds)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-
-
-     # --- Data loaders ---
-    def create_loaders(self, batch_size):
-        train_ds = ray.get(self.train_ds)
-        val_ds = ray.get(self.val_ds)
-        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(val_ds, batch_size=batch_size)
-
-
-
-        """
-        # with paths!!!!
-        train_path="data/QM9/qm9_subset_50.pt",
-        val_path="data/QM9/qm9_subset_50.pt" #chaneg later, are the same!!!
-        train_ds = torch.load(self.train_path)   # or use appropriate loader
-        val_ds = torch.load(self.val_path)
-        """
-        
-        return train_loader, val_loader
-
-
-
-    # --- Training one epoch ---
+    # One epoch
     def run_epoch(self, loader, model, criterion, optimizer=None):
-        model.train() if optimizer else model.eval()
+        training = optimizer is not None
+        model.train() if training else model.eval()
+
         total_loss = 0
+        total_graphs = 0
 
         for batch in loader:
             batch = batch.to(self.device)
-            out = model(batch)
-            pred = out.view(-1)
+            pred = model(batch)
             target = batch.y.view(-1)
             loss = criterion(pred, target)
 
-            if optimizer:
+            if training:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
             total_loss += loss.item() * batch.num_graphs
+            total_graphs += batch.num_graphs
 
-        return total_loss / len(loader.dataset)
+        return total_loss / total_graphs
 
-
-    
-
-    # --- Ray train function ---
+    # Ray training function
     def _train_model_ray(self, config):
-        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         train_loader, val_loader = self.create_loaders(
-            batch_size=config["batch_size"],
+            batch_size=config["batch_size"]
         )
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         model = SimpleMLP(
             num_atom_types=100,
-            hidden=config["hidden"]
+            hidden=config["hidden"],
         ).to(device)
 
         optimizer = optim.Adam(model.parameters(), lr=config["lr"])
@@ -104,13 +76,8 @@ class MLPTuner(BaseTuner):
             train_loss = self.run_epoch(train_loader, model, criterion, optimizer)
             val_loss = self.run_epoch(val_loader, model, criterion)
 
-            # report to Ray Tune
-            tune.report({"val_loss":val_loss})
+            tune.report({"val_loss": val_loss})
 
-
-
-
-    # Tuning config
     def get_tune_config(self):
         return {
             "hidden": tune.choice([32, 64, 128]),
@@ -118,13 +85,3 @@ class MLPTuner(BaseTuner):
             "batch_size": tune.choice([16, 32]),
             "epochs": 5,
         }
-
-
-
-
-
-
-
-
-
-

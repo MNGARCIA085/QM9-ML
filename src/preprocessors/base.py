@@ -32,7 +32,7 @@ class BasePreprocessor:
     # -------------------------
     # Loading dataset (Lazy-loaded)
     # -------------------------
-    def _load_datasetv0(self): # ok but memory intensive
+    def _load_dataset(self): # ok but memory intensive
         """Loads the dataset once and caches it."""
         if self._dataset is None:
             # Load the dataset (expensive I/O operation)
@@ -62,7 +62,7 @@ class BasePreprocessor:
     # Lazy-loading with subset caching
     # --------------------------------
     
-    def _load_dataset(self):
+    def _load_datasetOK(self):
         import os
         #Loads dataset or subset from disk if available.
         if self._dataset is not None:

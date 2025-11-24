@@ -25,7 +25,7 @@ class BaseTuner:
 
 
     # not all run epchos are the sme, have that in count
-    def run_epoch(self, loader, model, criterion, optimizer=None, train=True):
+    def run_epoch(self, train, loader, model, criterion, optimizer=None):
         raise NotImplementedError("Subclasses must implement it")
 
 

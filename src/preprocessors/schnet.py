@@ -16,7 +16,7 @@ class SchNetPreprocessor(BasePreprocessor):
 
         processed = []
         for d in dataset:
-            d_new = d.clone()  # <-- keeps all fields: pos, z, edge_index, etc
+            d_new = d.clone()  # <-- keeps all fields: pos, z, edge_index, etc; then i should remove edge_index...!!!!!!!!!!!!!! (z, pos, batch)
 
             if is_inference:
                 # remove y safely if exists

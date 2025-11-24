@@ -1,87 +1,126 @@
-import torch
+from .base import BaseTuner
 import torch.nn as nn
 import torch.optim as optim
-
 from torch_geometric.nn import global_mean_pool
-from ray import tune
-
-from .base import BaseTuner
-
-
-# ---------------- Simple PYG MLP model ---------------- #
-class SimpleMLP(nn.Module):
-    def __init__(self, num_atom_types=100, hidden=64):
-        super().__init__()
-        self.emb = nn.Embedding(num_atom_types, hidden)
-        self.fc = nn.Sequential(
-            nn.Linear(hidden, hidden),
-            nn.ReLU(),
-            nn.Linear(hidden, 1)
-        )
-
-    def forward(self, batch):
-        x = self.emb(batch.z)
-        x = global_mean_pool(x, batch.batch)
-        return self.fc(x).view(-1)
+from torch_geometric.loader import DataLoader
+from src.models.mlp import SimpleMLP
+import torch
 
 
-# ---------------- Tuner ---------------- #
+from src.utils.metrics import compute_metrics
+
+
 class MLPTuner(BaseTuner):
+    def __init__(self, train_ds, val_ds, epochs=5, device=None, **kwargs):
+        super().__init__(train_ds, val_ds, epochs=epochs, device=device)
 
-    def __init__(self, train_ds, val_ds):
-        super().__init__(train_ds, val_ds)
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # Any MLPTuner-specific attributes
+        #self.hidden_dim = kwargs.get("hidden_dim", 128)
+        #...................
 
-    # One epoch
-    def run_epoch(self, loader, model, criterion, optimizer=None):
-        training = optimizer is not None
-        model.train() if training else model.eval()
 
+    # run one epoch; maybe later a common fn.
+    def run_epoch(self, train, loader, model, criterion, optimizer=None):
+        model.train() if train else model.eval()
         total_loss = 0
-        total_graphs = 0
-
         for batch in loader:
             batch = batch.to(self.device)
-            pred = model(batch)
-            target = batch.y.view(-1)
-            loss = criterion(pred, target)
-
-            if training:
+            out = model(batch)
+            loss = criterion(out.view(-1), batch.y.view(-1).float())
+            if train:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-
             total_loss += loss.item() * batch.num_graphs
-            total_graphs += batch.num_graphs
+        return total_loss / len(loader.dataset)
+    
 
-        return total_loss / total_graphs
 
-    # Ray training function
-    def _train_model_ray(self, config):
+    # get preds
+    def get_predictions(self, loader, model):
+        model.eval()
 
-        train_loader, val_loader = self.create_loaders(
-            batch_size=config["batch_size"]
-        )
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        preds = []
+        trues = []
 
-        model = SimpleMLP(
-            num_atom_types=100,
-            hidden=config["hidden"],
-        ).to(device)
+        with torch.no_grad():
+            for batch in loader:
+                batch = batch.to(self.device)
 
-        optimizer = optim.Adam(model.parameters(), lr=config["lr"])
+                y_hat = model(batch)                 # shape [batch_size]
+                y = batch.y.view(-1).to(self.device) # ensure [batch_size]
+
+                preds.append(y_hat.cpu())
+                trues.append(y.cpu())
+
+        preds = torch.cat(preds)
+        trues = torch.cat(trues)
+        return trues, preds
+
+
+    # create model
+    def create_model_from_params(self, params):
+        return SimpleMLP(hidden=params["hidden"]).to(self.device)
+
+
+    # ---------------------------------------------------------
+    # Tuning with Optuna
+    # ---------------------------------------------------------
+    def create_model(self, trial):
+        hidden = trial.suggest_categorical("hidden", [32, 64, 128])
+        return SimpleMLP(hidden=hidden).to(self.device)
+
+    def objective(self, trial):
+        batch_size = trial.suggest_categorical("batch_size", [16, 32])
+        lr = trial.suggest_loguniform("lr", 1e-4, 1e-2)
+
+        train_loader, val_loader = self.create_loaders(batch_size)
+
+        model = self.create_model(trial)
+        optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion = nn.MSELoss()
 
-        for epoch in range(config["epochs"]):
-            train_loss = self.run_epoch(train_loader, model, criterion, optimizer)
-            val_loss = self.run_epoch(val_loader, model, criterion)
+        for _ in range(self.epochs): 
+            self.run_epoch(True, train_loader, model, criterion, optimizer)
+        
 
-            tune.report({"val_loss": val_loss})
+        # final validation loss
+        val_loss = self.run_epoch(False, val_loader, model, criterion)
 
-    def get_tune_config(self):
-        return {
-            "hidden": tune.choice([32, 64, 128]),
-            "lr": tune.loguniform(1e-4, 1e-2),
-            "batch_size": tune.choice([16, 32]),
-            "epochs": 5,
-        }
+        # ---- compute additional metrics ----
+        y_true, y_pred = self.get_predictions(val_loader, model)
+
+
+        # metrics
+        metrics = compute_metrics(y_true, y_pred)
+
+        # ---- store metadata in the trial ---- (later a dataclass maybe)
+        trial.set_user_attr("metrics", metrics)
+
+        # return
+        return val_loss   # Optuna must optimize a scalar
+
+
+
+
+
+
+"""
+
+Bonus: generic helper to extract full leaderboard of trials
+
+If you want a table of all trials + all metrics:
+
+def trials_to_dataframe(study):
+    rows = []
+    for t in study.trials:
+        row = {}
+        row.update(t.params)
+        row.update(t.user_attrs)
+        row["value"] = t.value
+        row["number"] = t.number
+        rows.append(row)
+    return rows
+
+
+"""

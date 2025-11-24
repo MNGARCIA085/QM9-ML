@@ -1,91 +1,92 @@
-import ray
-from abc import ABC, abstractmethod
-from ray import tune
-from ray.tune.schedulers import ASHAScheduler
-
-from torch_geometric.data import Batch
-
-
-#from ray.data.datasource import PythonSplitter
-
-import ray
-from abc import ABC, abstractmethod
-from ray import tune
-from ray.tune.schedulers import ASHAScheduler
-
-from torch_geometric.data import Batch
-
-
-# ---------------------------------------------------------
-# Wrapper so Ray cannot infer Arrow schema
-# ---------------------------------------------------------
-class GraphWrapper:
-    def __init__(self, g):
-        self.g = g
-
-
 # ---------------------------------------------------------
 # Base tuner
 # ---------------------------------------------------------
 import torch
 from torch_geometric.loader import DataLoader
-from abc import ABC, abstractmethod
-from ray import tune
-from ray.tune.schedulers import ASHAScheduler
+import torch.nn as nn
+import torch.optim as optim
+import optuna
+from torch_geometric.loader import DataLoader
 
 
-class BaseTuner(ABC):
-    """
-    Clean Ray Tune hyperparameter tuner for PyG datasets.
-    Uses plain Python lists and PyG DataLoaders per trial.
-    """
+class BaseTuner:
+    def __init__(self, train_ds, val_ds, epochs=5, device=None):
+        self.train_ds = train_ds
+        self.val_ds = val_ds
+        self.epochs = epochs  # small epochs for quick test
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-    def __init__(self, train_ds, val_ds):
-        # Just store the raw PyG Data objects
-        self.train_list = train_ds
-        self.val_list = val_ds
 
+    # loaders
     def create_loaders(self, batch_size):
-        train_loader = DataLoader(
-            self.train_list,
-            batch_size=batch_size,
-            shuffle=True,
-        )
-
-        val_loader = DataLoader(
-            self.val_list,
-            batch_size=batch_size,
-            shuffle=False,
-        )
-
+        train_loader = DataLoader(self.train_ds, batch_size=batch_size, shuffle=True)
+        val_loader = DataLoader(self.val_ds, batch_size=batch_size, shuffle=False)
         return train_loader, val_loader
 
-    # ---------------- Abstract methods ---------------- #
-    @abstractmethod
-    def _train_model_ray(self, config):
-        """Train one model config."""
-        pass
 
-    @abstractmethod
-    def get_tune_config(self):
-        """Return Ray Tune search space."""
-        pass
+    # not all run epchos are the sme, have that in count
+    def run_epoch(self, loader, model, criterion, optimizer=None, train=True):
+        raise NotImplementedError("Subclasses must implement it")
 
-    # -----------------------------------------------------
-    # Ray Tune wrapper
-    # -----------------------------------------------------
-    def tune(self, num_samples=2):
-        config = self.get_tune_config()
-        scheduler = ASHAScheduler(metric="val_loss", mode="min")
 
-        tuner = tune.Tuner(
-            tune.with_parameters(self._train_model_ray),
-            param_space=config,
-            tune_config=tune.TuneConfig(
-                scheduler=scheduler,
-                num_samples=num_samples,
-            )
-        )
-        results = tuner.fit()
-        best = results.get_best_result(metric="val_loss", mode="min")
-        return best.config
+    def objective(self, trial):
+        raise NotImplementedError("Subclasses must implement objective()")
+
+    
+
+    #
+    def tune(self, n_trials=10):
+        study = optuna.create_study(direction="minimize")
+        study.optimize(self.objective, n_trials=n_trials)
+
+        print("Best params:", study.best_params)
+        best_attrs = study.best_trial.user_attrs # metrics are a key under this
+        print("All metrics:", best_attrs)
+
+        # ---- train best model ----
+        best_model = self.train_best_model(study.best_params)
+
+        return best_model, study.best_params, best_attrs
+    
+
+
+
+    def train_best_model(self, best_params):
+        """
+        Train a fresh model using the best hyperparameters.
+        """
+
+        # Loaders
+        train_loader, val_loader = self.create_loaders(best_params["batch_size"])
+
+        # Rebuild best model (subclasses must implement create_model_from_params)
+        model = self.create_model_from_params(best_params)
+        optimizer = torch.optim.Adam(model.parameters(), lr=best_params["lr"])
+        criterion = nn.MSELoss()
+
+        for epoch in range(self.epochs):
+            train_loss = self.run_epoch(True, train_loader, model, criterion, optimizer)
+            val_loss   = self.run_epoch(False, val_loader, model, criterion)
+            print(f"[BEST MODEL] Epoch {epoch+1}/{self.epochs} | train={train_loss:.4f} | val={val_loss:.4f}")
+
+        return model
+
+
+    # to delete later
+    def tunev0(self, n_trials=10):
+        study = optuna.create_study(direction="minimize")
+        study.optimize(self.objective, n_trials=n_trials)
+        print("Best params:", study.best_params)
+
+        #
+        best_attrs  = study.best_trial.user_attrs
+        print("All metrics:", best_attrs)
+
+        # 
+
+        return study.best_params
+
+    
+
+
+

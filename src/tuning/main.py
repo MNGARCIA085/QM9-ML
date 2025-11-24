@@ -1,34 +1,28 @@
-
-
-
-
-
-from src.preprocessors.mlp import MLPPreprocessor
 from .mlp import MLPTuner
+# from gcn_tuner import GCNTuner
+# from schnet_tuner import SchNetTuner
+from src.preprocessors.mlp import MLPPreprocessor
 
 
 def main():
-
-    # prep
-    prep = MLPPreprocessor(subset=50)
+    prep = MLPPreprocessor(subset=1000)
     train_ds, val_ds = prep.preprocess()
-
-    # tuning
     tuner = MLPTuner(train_ds, val_ds)
+    model, best_params, attrs = tuner.tune(n_trials=5)
 
-    #
-    best_config = tuner.tune(num_samples=2)
-    print(best_config)
-
+    print(best_params) # bs, lr, hidden
 
 
-
-
+    
 
 
 
 if __name__ == "__main__":
     main()
+
+
+
+
 
 
 

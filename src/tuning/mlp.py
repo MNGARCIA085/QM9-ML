@@ -11,8 +11,8 @@ from src.utils.metrics import compute_metrics
 
 
 class MLPTuner(BaseTuner):
-    def __init__(self, train_ds, val_ds, epochs=5, device=None, **kwargs):
-        super().__init__(train_ds, val_ds, epochs=epochs, device=device)
+    def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
+        super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)
 
         # Any MLPTuner-specific attributes
         #self.hidden_dim = kwargs.get("hidden_dim", 128)
@@ -66,21 +66,24 @@ class MLPTuner(BaseTuner):
     # ---------------------------------------------------------
     # Tuning with Optuna
     # ---------------------------------------------------------
-    def create_model(self, trial):
-        hidden = trial.suggest_categorical("hidden", [32, 64, 128])
+    def create_model(self, trial, hidden_opts):
+        hidden = trial.suggest_categorical("hidden", hidden_opts)
         return SimpleMLP(hidden=hidden).to(self.device)
 
-    def objective(self, trial):
-        batch_size = trial.suggest_categorical("batch_size", [16, 32])
-        lr = trial.suggest_loguniform("lr", 1e-4, 1e-2)
+
+
+
+    def objective(self, trial, batch_size_opts=[16, 32], hidden_opts=[32, 64, 128], lr_low=1e-4, lr_high=1e-2):
+        batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
+        lr = trial.suggest_loguniform("lr", lr_low, lr_high)
 
         train_loader, val_loader = self.create_loaders(batch_size)
 
-        model = self.create_model(trial)
+        model = self.create_model(trial, hidden_opts)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion = nn.MSELoss()
 
-        for _ in range(self.epochs): 
+        for _ in range(self.epochs_trials): 
             self.run_epoch(True, train_loader, model, criterion, optimizer)
         
 

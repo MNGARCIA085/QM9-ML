@@ -9,18 +9,38 @@ from src.preprocessors.schnet import SchNetPreprocessor
 
 def main():
     
-    #prep = MLPPreprocessor(subset=1000)
-    #prep = GCNPreprocessor(subset=1000)
 
-    prep = SchNetPreprocessor(subset=1000)
-
+    """
+    prep = MLPPreprocessor(subset=1000)
     train_ds, val_ds = prep.preprocess()
+    tuner = MLPTuner(train_ds, val_ds)
+    model, best_params, attrs = tuner.tune(n_trials=5,
+                                           batch_size_opts=[256],
+                                           hidden_opts=[256, 512],
+                                           )
+    """
     
-    #tuner = MLPTuner(train_ds, val_ds)
-    #tuner = GCNTuner(train_ds, val_ds)
-    tuner = SchNetTuner(train_ds, val_ds)
+
+    """
+    prep = GCNPreprocessor(subset=1000)
+    train_ds, val_ds = prep.preprocess()
+    tuner = GCNTuner(train_ds, val_ds)
+    model, best_params, attrs = tuner.tune(n_trials=5,
+            batch_size_opts=[256],
+            hidden_opts=[256, 512],
+        )
+    """
+
+
     
-    model, best_params, attrs = tuner.tune(n_trials=5)
+    prep = SchNetPreprocessor(subset=1000)
+    train_ds, val_ds = prep.preprocess()
+    tuner = SchNetTuner(train_ds, val_ds, epochs=5, epochs_trials=3)
+    model, best_params, attrs = tuner.tune(n_trials=5,
+                                           num_filters_opts=[48],
+                                           )
+    
+
 
     print(best_params) # bs, lr, hidden
 

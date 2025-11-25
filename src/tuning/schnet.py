@@ -17,8 +17,8 @@ import torch
 
 
 class SchNetTuner(BaseTuner):
-    def __init__(self, train_ds, val_ds, epochs=5, device=None, **kwargs):
-        super().__init__(train_ds, val_ds, epochs=epochs, device=device)
+    def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
+        super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)
 
 
 
@@ -74,28 +74,30 @@ class SchNetTuner(BaseTuner):
     # ---------------------------------------------------------
     
     # not that common to all subclasses
-    def create_model(self, trial):
-        hidden_channels = trial.suggest_categorical("hidden_channels", [32, 64])
-        num_filters = trial.suggest_categorical("num_filters", [32, 64])
-        num_interactions = trial.suggest_int("num_interactions", 1, 5)
+    def create_model(self, trial, hidden_channels_opts, num_filters_opts, num_interactions_low, num_interactions_high):
+        hidden_channels = trial.suggest_categorical("hidden_channels", hidden_channels_opts)
+        num_filters = trial.suggest_categorical("num_filters", num_filters_opts)
+        num_interactions = trial.suggest_int("num_interactions", num_interactions_low, num_interactions_high)
         return SchNet(hidden_channels=hidden_channels,
                       num_filters=num_filters,
                       num_interactions=num_interactions).to(self.device)
 
 
     # note it might be common to all subclasses!!!! (get preds may be diff an the attrs that i will store)
-    def objective(self, trial):
+    def objective(self, trial, batch_size_opts = [16], hidden_channels_opts=[32, 64], 
+    					num_filters_opts=[32, 64], num_interactions_low=1,
+    					num_interactions_high=5, lr_low=1e-4, lr_high=1e-2):
 
-	    batch_size = trial.suggest_categorical("batch_size", [16, 32])
-	    lr = trial.suggest_loguniform("lr", 1e-4, 1e-3)
+	    batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
+	    lr = trial.suggest_loguniform("lr", lr_low, lr_high)
 
 	    train_loader, val_loader = self.create_loaders(batch_size)
 
-	    model = self.create_model(trial)
+	    model = self.create_model(trial, hidden_channels_opts, num_filters_opts, num_interactions_low, num_interactions_high)
 	    optimizer = optim.Adam(model.parameters(), lr=lr)
 	    criterion = nn.MSELoss()
 
-	    # 📌 Add scheduler HERE; change location later
+	    # Add scheduler HERE; change location later
 	    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
 	        optimizer,
 	        mode="min",
@@ -104,11 +106,11 @@ class SchNetTuner(BaseTuner):
 	        min_lr=1e-6
 	    )
 
-	    for epoch in range(5):
+	    for epoch in range(self.epochs_trials):
 	        self.run_epoch(True, train_loader, model, criterion, optimizer)
 	        val_loss = self.run_epoch(False, val_loader, model, criterion)
 
-	        # 📌 Important: Call scheduler AFTER validation
+	        # Important: Call scheduler AFTER validation
 	        scheduler.step(val_loss)
 
 	        #print(f"Epoch {epoch}: lr = {optimizer.param_groups[0]['lr']}")

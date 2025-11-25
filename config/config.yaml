@@ -1,0 +1,14 @@
+defaults:
+  #- preprocessor: preprocessor
+  - tuning: tuning
+  #- evaluation: evaluation
+  - override hydra/launcher: joblib
+  - _self_
+
+
+model_type: "gcn"  # mlp, gcn, schnet
+random_state: 42
+experiment_name: qm9
+hydra:
+  launcher:
+    n_jobs: 2

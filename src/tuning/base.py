@@ -10,10 +10,11 @@ from torch_geometric.loader import DataLoader
 
 
 class BaseTuner:
-    def __init__(self, train_ds, val_ds, epochs=5, device=None):
+    def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None):
         self.train_ds = train_ds
         self.val_ds = val_ds
-        self.epochs = epochs  # small epochs for quick test
+        self.epochs = epochs  
+        self.epochs_trials = epochs_trials # small epochs for quick test
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -29,15 +30,18 @@ class BaseTuner:
         raise NotImplementedError("Subclasses must implement it")
 
 
-    def objective(self, trial):
+    def objective(self, trial, **kwargs):
         raise NotImplementedError("Subclasses must implement objective()")
 
     
 
     #
-    def tune(self, n_trials=10):
+    def tune(self, n_trials=10, **kwargs):
         study = optuna.create_study(direction="minimize")
-        study.optimize(self.objective, n_trials=n_trials)
+        #study.optimize(self.objective, n_trials=n_trials)
+        study.optimize(lambda trial: self.objective(trial, **kwargs), # to pass kwargs
+                       n_trials=n_trials)
+
 
         print("Best params:", study.best_params)
         best_attrs = study.best_trial.user_attrs # metrics are a key under this

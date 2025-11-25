@@ -1,0 +1,22 @@
+num_samples: 5
+batch_size: [16, 32]
+lr:
+  #type: loguniform
+  min: 1e-4
+  max: 1e-2
+epochs: 20 # maybe to train the best model
+epochs_trials: 5  # short runs for hyperparameter search
+
+
+mlp:
+  - hidden: [32, 64, 128]
+
+
+gcn:
+  - hidden: [32, 64, 128]
+
+
+schent:
+  - hidden_channels: [32, 64]
+  - num_filters: [32, 64]
+  #- num_interactions

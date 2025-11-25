@@ -1,10 +1,24 @@
+from .registry import TuningRegistry
+
 from .mlp import MLPTuner
 from .gcn import GCNTuner
 from .schnet import SchNetTuner
 
+
+from src.preprocessors.registry import PreprocessorRegistry
+
 from src.preprocessors.mlp import MLPPreprocessor
 from src.preprocessors.gcn import GCNPreprocessor
 from src.preprocessors.schnet import SchNetPreprocessor
+
+
+
+
+
+
+#from src.tuning.schnet import SchNetTuner
+#from src.tuning.gcn import GCNTuner
+#from src.tuning.mlp import MLPTuner
 
 
 def main():
@@ -32,13 +46,87 @@ def main():
     """
 
 
-    
+    """
     prep = SchNetPreprocessor(subset=1000)
     train_ds, val_ds = prep.preprocess()
     tuner = SchNetTuner(train_ds, val_ds, epochs=5, epochs_trials=3)
     model, best_params, attrs = tuner.tune(n_trials=5,
                                            num_filters_opts=[48],
                                            )
+    """
+
+
+    model_type = 'mlp'
+    prep = PreprocessorRegistry.create(
+        model_type,
+        target=0,
+        subset=1000,
+    )
+    train_ds, val_ds = prep.preprocess()
+
+    schnet_tuner = TuningRegistry.create(
+            model_type,
+            train_ds=train_ds,
+            val_ds=val_ds,
+            epochs=5,
+            epochs_trials=3,
+        )
+    model, best_params, attrs = schnet_tuner.tune(n_trials=5,
+                                            batch_size_opts=[128],
+                                            hidden_opts=[512],
+                                           )
+
+
+
+
+    """
+    model_type = 'gcn'
+    prep = PreprocessorRegistry.create(
+        model_type,
+        target=0,
+        subset=1000,
+    )
+    train_ds, val_ds = prep.preprocess()
+
+    schnet_tuner = TuningRegistry.create(
+            model_type,
+            train_ds=train_ds,
+            val_ds=val_ds,
+            epochs=5,
+            epochs_trials=3,
+        )
+    model, best_params, attrs = schnet_tuner.tune(n_trials=5,
+                                            batch_size_opts=[256],
+                                            hidden_opts=[256, 512],
+                                           )
+    """
+
+
+
+
+
+    # SCHENT
+    """
+    model_type = 'schnet'
+    prep = PreprocessorRegistry.create(
+        model_type,
+        target=0,
+        subset=1000,
+    )
+    train_ds, val_ds = prep.preprocess()
+
+    schnet_tuner = TuningRegistry.create(
+            'schnet',
+            train_ds=train_ds,
+            val_ds=val_ds,
+            epochs=5,
+            epochs_trials=3,
+        )
+    model, best_params, attrs = schnet_tuner.tune(n_trials=5,
+                                           num_filters_opts=[48],
+                                           )
+    """
+
     
 
 

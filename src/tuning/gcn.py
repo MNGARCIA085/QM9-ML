@@ -1,22 +1,17 @@
-# gcn_tuner.py
 from .base import BaseTuner
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch_geometric.loader import DataLoader
+from src.utils.metrics import compute_metrics
+from .registry import TuningRegistry
 from src.models.gcn import SimpleGCN
 
 
-from src.utils.metrics import compute_metrics
-
-
+@TuningRegistry.register("gcn")
 class GCNTuner(BaseTuner):
     def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)
     
-
-
-
     # create model
     def create_model_from_params(self, params):
         return SimpleGCN(hidden=params["hidden"]).to(self.device)
@@ -39,8 +34,6 @@ class GCNTuner(BaseTuner):
                 optimizer.step()
             total_loss += loss.item() * batch.num_graphs
         return total_loss / len(loader.dataset)
-
-
 
 
     # ---------------------------------------------------------
@@ -81,7 +74,7 @@ class GCNTuner(BaseTuner):
         return val_loss
 
 
-    # preds and save metrics!!!!!!!!!!!!!!!!!!!!!!!!
+    # preds
     def get_predictions(self, loader, model):
         model.eval()
         preds = []

@@ -1,15 +1,14 @@
 from .base import BaseTuner
+import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch_geometric.nn import global_mean_pool
-from torch_geometric.loader import DataLoader
 from src.models.mlp import SimpleMLP
-import torch
-
-
+from .registry import TuningRegistry
 from src.utils.metrics import compute_metrics
 
 
+
+@TuningRegistry.register("mlp")
 class MLPTuner(BaseTuner):
     def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)

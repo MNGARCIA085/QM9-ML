@@ -1,26 +1,18 @@
-
-# schnet_tuner.py
 from .base import BaseTuner
-from torch_geometric.nn import SchNet
-import torch.optim as optim
-from torch_geometric.loader import DataLoader
-import torch.nn as nn
-
-
-from src.models.schnet import SchNetRegressor
-
-
-from src.utils.metrics import compute_metrics
-
-
 import torch
+import torch.optim as optim
+import torch.nn as nn
+from torch_geometric.nn import SchNet
+from src.models.schnet import SchNetRegressor
+from src.utils.metrics import compute_metrics
+from .registry import TuningRegistry
 
 
+
+@TuningRegistry.register("schnet")
 class SchNetTuner(BaseTuner):
     def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)
-
-
 
     # create model
     def create_model_from_params(self, params):
@@ -28,17 +20,9 @@ class SchNetTuner(BaseTuner):
         				num_filters=params["num_filters"],
         				num_interactions=params["num_interactions"]).to(self.device) # later cutoff
 
-
-
-
-
-    # --- 3️⃣ Training / evaluation function ---
+    # --- Training / evaluation function ---
     # at leas the signatur goes in the base class
     def run_epoch(self, train, loader, model, criterion, optimizer=None): #train=True for training else False
-
-
-
-
         model.train() if train else model.eval()
         total_loss = 0
         for batch in loader:
@@ -46,20 +30,12 @@ class SchNetTuner(BaseTuner):
             if train:
                 optimizer.zero_grad()
             out = model(batch.z, batch.pos, batch.batch)  # [num_graphs, hidden_channels]
-
-
             #print(out.shape)
-            
             #pred = regressor(out).squeeze(-1)             # [num_graphs]
             pred = out.squeeze(-1)
-
             #print(pred.shape)
-            
             target = batch.y.squeeze(-1)                  # [num_graphs]
-
-
             #print(target.shape)
-            
             loss = criterion(pred, target)
             if train:
                 loss.backward()
@@ -130,9 +106,7 @@ class SchNetTuner(BaseTuner):
 	    return val_loss
 
 
-
-
-    # make preds -> to check!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # preds
     def get_predictions(self, loader, model):
 	    model.eval()
 

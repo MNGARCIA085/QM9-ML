@@ -1,0 +1,9 @@
+batch_size_opts: [16, 32]
+hidden_channels_opts: [32, 64]
+num_filters_opts: [32, 64, 128]
+#num_interactions_opts: [3, 4, 5]
+#lr_range: [5e-5, 1e-3]
+lr_low: 1e-4
+lr_high: 1e-2
+num_interactions_low : 1
+num_interactions_high : 5

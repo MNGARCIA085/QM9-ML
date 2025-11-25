@@ -1,0 +1,30 @@
+tuning:
+  num_samples: 5
+  batch_size:
+  - 16
+  - 32
+  lr:
+    min: 0.0001
+    max: 0.01
+  epochs: 20
+  epochs_trials: 5
+  mlp:
+  - hidden:
+    - 32
+    - 64
+    - 128
+  gcn:
+  - hidden:
+    - 32
+    - 64
+    - 128
+  schent:
+  - hidden_channels:
+    - 32
+    - 64
+  - num_filters:
+    - 32
+    - 64
+model_type: gcn
+random_state: 42
+experiment_name: qm9

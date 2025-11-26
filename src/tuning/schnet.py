@@ -92,7 +92,7 @@ class SchNetTuner(BaseTuner):
 	        #print(f"Epoch {epoch}: lr = {optimizer.param_groups[0]['lr']}")
 
 	    # final validation loss
-	    val_loss = self.run_epoch(False, val_loader, model, criterion)
+	    # -> rdundanyte val_loss = self.run_epoch(False, val_loader, model, criterion)
 
 	    # ---- compute additional metrics ----
 	    y_true, y_pred = self.get_predictions(val_loader, model)
@@ -127,3 +127,42 @@ class SchNetTuner(BaseTuner):
 	    return trues, preds
 
 
+
+
+"""
+
+create_model_from_params vs. create_model: You have two methods for creating a model:
+
+create_model_from_params(self, params) uses SchNetRegressor.
+
+create_model(self, trial, ...) uses the base SchNet (from torch_geometric.nn).
+
+Recommendation: You should stick to one model definition. If SchNetRegressor is your final model 
+(which is likely, as the base SchNet usually needs a final regression head), 
+the create_model function used in the Optuna objective should also return an instance of SchNetRegressor instead of SchNet.
+"""
+
+
+"""
+
+clenaer objective
+
+def objective(self, trial, **kwargs):
+    # Extract SchNet-specific parameters, using .get() for safe defaults
+    hidden_channels_opts = kwargs.get("hidden_channels_opts", [32, 64])
+    num_filters_opts = kwargs.get("num_filters_opts", [32, 64])
+    num_interactions_low = kwargs.get("num_interactions_low", 1)
+    num_interactions_high = kwargs.get("num_interactions_high", 5)
+    
+    # Extract general parameters
+    batch_size_opts = kwargs.get("batch_size_opts", [16])
+    lr_low = kwargs.get("lr_low", 1e-4)
+    lr_high = kwargs.get("lr_high", 1e-2)
+
+    # --- Optuna suggestions ---
+    batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
+    lr = trial.suggest_loguniform("lr", lr_low, lr_high)
+
+    # The rest of your logic follows...
+    # ...
+"""

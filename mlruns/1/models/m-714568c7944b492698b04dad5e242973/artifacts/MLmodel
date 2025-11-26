@@ -1,0 +1,23 @@
+artifact_path: /home/marcos/Escritorio/AI-prod/QM9-ML/mlruns/1/models/m-714568c7944b492698b04dad5e242973/artifacts
+flavors:
+  python_function:
+    config:
+      device: null
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pytorch
+    pickle_module_name: mlflow.pytorch.pickle_module
+    python_version: 3.10.12
+  pytorch:
+    code: null
+    model_data: data
+    pytorch_version: 2.8.0+cu128
+mlflow_version: 3.6.0
+model_id: m-714568c7944b492698b04dad5e242973
+model_size_bytes: 4616223
+model_uuid: m-714568c7944b492698b04dad5e242973
+prompts: null
+run_id: aa6a8571349240629e868b55f6dbd43c
+utc_time_created: '2025-11-26 20:37:20.385335'

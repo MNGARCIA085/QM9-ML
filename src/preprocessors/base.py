@@ -125,7 +125,7 @@ class BasePreprocessor:
         Must be implemented by subclasses.
           For MLP: extract z, and a column of y
           For GCN: extract z, pos, edge_index, y
-          For SchNet: extract all fields
+          For SchNet: extract all fields ------------> nop, correct
         """
         raise NotImplementedError
 

@@ -38,14 +38,26 @@ def main(cfg: DictConfig):
             model_type,
             train_ds=train_ds,
             val_ds=val_ds,
-            epochs=5,
+            epochs=3,
             epochs_trials=3,
         )
 
 
-    model, best_params, attrs = tuner.tune(n_trials=5,
+    results, best_params, attrs = tuner.tune(n_trials=3,
                                              **cfg_tuning,
                                              )
+
+
+    from src.utils.logging import logging
+
+    # for a quick test
+    artifacts = {
+        "val_ratio": 0.2,
+        "subset": 1000,
+        "target": 0
+    }
+
+    logging('test', 'tuning', artifacts, results, model_type)
     
 
     """

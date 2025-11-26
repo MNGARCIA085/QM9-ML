@@ -16,6 +16,7 @@ class BaseTuner:
         self.epochs = epochs  
         self.epochs_trials = epochs_trials # small epochs for quick test
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.best_params = None
 
 
     # loaders
@@ -38,7 +39,6 @@ class BaseTuner:
     #
     def tune(self, n_trials=10, **kwargs):
         study = optuna.create_study(direction="minimize")
-        #study.optimize(self.objective, n_trials=n_trials)
         study.optimize(lambda trial: self.objective(trial, **kwargs), # to pass kwargs
                        n_trials=n_trials)
 
@@ -47,10 +47,20 @@ class BaseTuner:
         best_attrs = study.best_trial.user_attrs # metrics are a key under this
         print("All metrics:", best_attrs)
 
-        # ---- train best model ----
-        best_model = self.train_best_model(study.best_params)
+        
 
-        return best_model, study.best_params, best_attrs
+        # store for later (MLflow, logging, checkpoints…)
+        self.best_params = study.best_params
+        self.best_attrs  = best_attrs   # metrics / extras (right now i just for my best trial for a few epochs)
+
+
+        # ---- train best model ----
+        results = self.train_best_model(self.best_params)
+        # return more...........
+
+
+
+        return results, study.best_params, best_attrs
     
 
 
@@ -73,22 +83,34 @@ class BaseTuner:
             val_loss   = self.run_epoch(False, val_loader, model, criterion)
             print(f"[BEST MODEL] Epoch {epoch+1}/{self.epochs} | train={train_loss:.4f} | val={val_loss:.4f}")
 
-        return model
+
+        # ---- compute additional metrics ----
+        y_true, y_pred = self.get_predictions(val_loader, model)
+
+        # metrics (compute again; for my best model for trained for a larger period of time)
+        from src.utils.metrics import compute_metrics
+        metrics = compute_metrics(y_true, y_pred)
 
 
-    # to delete later
-    def tunev0(self, n_trials=10):
-        study = optuna.create_study(direction="minimize")
-        study.optimize(self.objective, n_trials=n_trials)
-        print("Best params:", study.best_params)
+    
+        # return
+        return(
+                {
+                    "model": model,
+                    "train_loss": train_loss,
+                    "val_loss": val_loss, # later history
+                    "val_metrics": metrics,
+                    "hyperparams": best_params,
+                }
+            )
 
-        #
-        best_attrs  = study.best_trial.user_attrs
-        print("All metrics:", best_attrs)
+        #return model
 
-        # 
 
-        return study.best_params
+    def get_preds(self, loader, model):
+        """Child must implement. Returns y_true, y_pred"""
+        raise NotImplementedError
+
 
     
 

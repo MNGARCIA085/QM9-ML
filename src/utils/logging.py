@@ -123,6 +123,42 @@ insteado of order_by
 
 
 
+import torch
+import tempfile
+
+
+
+import torch
+import tempfile
+from pathlib import Path
+
+
+def mlflow_save_model_artifact(model, artifact_name="best_model.pt"):
+    """
+    Saves a model state_dict temporarily with a fixed file name
+    and logs it as an MLflow artifact.
+    """
+    # Create a temp directory
+    tmp_dir = Path(tempfile.mkdtemp())
+    tmp_path = tmp_dir / artifact_name
+
+    # Save model under a known fixed file name
+    torch.save(model.state_dict(), tmp_path)
+
+    # Log to MLflow under checkpoints/
+    mlflow.log_artifact(str(tmp_path), artifact_path="checkpoints")
+
+    return str(tmp_path)
+
+
+
+
+
+
+
+
+
+
 # log test results -> adapt!!!!!!!!!!!!!!
 def log_test_results(exp_name, tuning_run_id, model_type, results):
 

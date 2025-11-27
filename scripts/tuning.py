@@ -13,6 +13,8 @@ from src.utils.logging import logging
 
 
 
+
+
 @hydra.main(config_path="../config", config_name="config", version_base=None)
 def main(cfg: DictConfig):
 

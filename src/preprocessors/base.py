@@ -130,7 +130,7 @@ class BasePreprocessor:
         raise NotImplementedError
 
     # -------------------------
-    # Concrete Workflow Methods (Handle Redundancy)
+    # Concrete Workflow Methods
     # -------------------------
     
     def preprocess(self):
@@ -148,3 +148,16 @@ class BasePreprocessor:
         """Workflow for inference: Load -> Format (no target) -> Return."""
         dataset = self._load_dataset()
         return self._format_dataset(dataset, is_inference=True)
+
+
+
+    # ---------------------------
+    # Logging / artifacts
+    # ---------------------------
+    def get_artifacts(self):
+        """Return all key artifacts and metadata for logging."""
+        return {
+            "val_ratio": self.val_ratio,
+            "subset": self.subset,
+            "target": self.target,
+        }

@@ -2,7 +2,6 @@ from .base import BaseTuner
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from torch_geometric.nn import SchNet
 from src.models.schnet import SchNetRegressor
 from src.utils.metrics import compute_metrics
 from .registry import TuningRegistry
@@ -11,158 +10,152 @@ from .registry import TuningRegistry
 
 @TuningRegistry.register("schnet")
 class SchNetTuner(BaseTuner):
+
     def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)
 
     # create model
     def create_model_from_params(self, params):
-        return SchNetRegressor(hidden_channels=params["hidden_channels"],
-        				num_filters=params["num_filters"],
-        				num_interactions=params["num_interactions"]).to(self.device) # later cutoff
+        return SchNetRegressor(
+            hidden_channels=params["hidden_channels"],
+            num_filters=params["num_filters"],
+            num_interactions=params["num_interactions"]
+        ).to(self.device)  # later cutoff
 
-    # --- Training / evaluation function ---
-    # at leas the signatur goes in the base class
-    def run_epoch(self, train, loader, model, criterion, optimizer=None): #train=True for training else False
-        model.train() if train else model.eval()
+    # ---------------------------------------------------------------------
+    # Training / evaluation function (SchNet-specific)
+    # ---------------------------------------------------------------------
+    def run_epoch(self, train, loader, model, criterion, optimizer=None):
+        if train:
+            model.train()
+        else:
+            model.eval()
+
         total_loss = 0
-        for batch in loader:
-            batch = batch.to(self.device)
-            if train:
-                optimizer.zero_grad()
-            out = model(batch.z, batch.pos, batch.batch)  # [num_graphs, hidden_channels]
-            #print(out.shape)
-            #pred = regressor(out).squeeze(-1)             # [num_graphs]
-            pred = out.squeeze(-1)
-            #print(pred.shape)
-            target = batch.y.squeeze(-1)                  # [num_graphs]
-            #print(target.shape)
-            loss = criterion(pred, target)
-            if train:
-                loss.backward()
-                optimizer.step()
-            total_loss += loss.item() * batch.num_graphs
-        return total_loss / len(loader.dataset)
 
+        # --- IMPORTANT ---
+        # Use torch.no_grad() only when NOT training
+        context = torch.enable_grad() if train else torch.no_grad()
+        with context:
+            for batch in loader:
+                batch = batch.to(self.device)
+
+                if train:
+                    optimizer.zero_grad()
+
+                out = model(batch.z, batch.pos, batch.batch)
+                pred = out.squeeze(-1)
+                target = batch.y.squeeze(-1)
+
+                loss = criterion(pred, target)
+
+                if train:
+                    loss.backward()
+                    optimizer.step()
+
+                total_loss += loss.item() * batch.num_graphs
+
+        return total_loss / len(loader.dataset)
 
 
     # ---------------------------------------------------------
     # Tuning with Optuna
     # ---------------------------------------------------------
-    
-    # not that common to all subclasses
-    def create_model(self, trial, hidden_channels_opts, num_filters_opts, num_interactions_low, num_interactions_high):
+    def create_model(self, trial, hidden_channels_opts, num_filters_opts,
+                     num_interactions_low, num_interactions_high):
+
         hidden_channels = trial.suggest_categorical("hidden_channels", hidden_channels_opts)
         num_filters = trial.suggest_categorical("num_filters", num_filters_opts)
-        num_interactions = trial.suggest_int("num_interactions", num_interactions_low, num_interactions_high)
-        return SchNet(hidden_channels=hidden_channels,
-                      num_filters=num_filters,
-                      num_interactions=num_interactions).to(self.device)
+        num_interactions = trial.suggest_int("num_interactions",
+                                             num_interactions_low,
+                                             num_interactions_high)
+
+        return SchNetRegressor(
+            hidden_channels=hidden_channels,
+            num_filters=num_filters,
+            num_interactions=num_interactions
+        ).to(self.device)
 
 
-    # note it might be common to all subclasses!!!! (get preds may be diff an the attrs that i will store)
-    def objective(self, trial, batch_size_opts = [16], hidden_channels_opts=[32, 64], 
-    					num_filters_opts=[32, 64], num_interactions_low=1,
-    					num_interactions_high=5, lr_low=1e-4, lr_high=1e-2):
 
-	    batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
-	    lr = trial.suggest_loguniform("lr", lr_low, lr_high)
+    # objective
+    def objective(self, trial, **kwargs):
 
-	    train_loader, val_loader = self.create_loaders(batch_size)
+        # SchNet-specific params
+        hidden_channels_opts = kwargs.get("hidden_channels_opts", [32, 64])
+        num_filters_opts = kwargs.get("num_filters_opts", [32, 64])
+        num_interactions_low = kwargs.get("num_interactions_low", 1)
+        num_interactions_high = kwargs.get("num_interactions_high", 5)
 
-	    model = self.create_model(trial, hidden_channels_opts, num_filters_opts, num_interactions_low, num_interactions_high)
-	    optimizer = optim.Adam(model.parameters(), lr=lr)
-	    criterion = nn.MSELoss()
+        # General parameters
+        batch_size_opts = kwargs.get("batch_size_opts", [16])
+        lr_low = kwargs.get("lr_low", 1e-4)
+        lr_high = kwargs.get("lr_high", 1e-2)
 
-	    # Add scheduler HERE; change location later
-	    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-	        optimizer,
-	        mode="min",
-	        factor=0.7,
-	        patience=2,
-	        min_lr=1e-6
-	    )
+        # Optuna sampling
+        batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
+        lr = trial.suggest_loguniform("lr", lr_low, lr_high)
 
-	    for epoch in range(self.epochs_trials):
-	        self.run_epoch(True, train_loader, model, criterion, optimizer)
-	        val_loss = self.run_epoch(False, val_loader, model, criterion)
+        train_loader, val_loader = self.create_loaders(batch_size)
 
-	        # Important: Call scheduler AFTER validation
-	        scheduler.step(val_loss)
+        model = self.create_model(
+            trial,
+            hidden_channels_opts,
+            num_filters_opts,
+            num_interactions_low,
+            num_interactions_high
+        )
 
-	        #print(f"Epoch {epoch}: lr = {optimizer.param_groups[0]['lr']}")
+        optimizer = optim.Adam(model.parameters(), lr=lr)
+        criterion = nn.MSELoss()
 
-	    # final validation loss
-	    # -> rdundanyte val_loss = self.run_epoch(False, val_loader, model, criterion)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode="min",
+            factor=0.7,
+            patience=2,
+            min_lr=1e-6
+        )
 
-	    # ---- compute additional metrics ----
-	    y_true, y_pred = self.get_predictions(val_loader, model)
+        # ---- tuning loop ----
+        for epoch in range(self.epochs_trials):
+            self.run_epoch(True,  train_loader, model, criterion, optimizer)
+            val_loss = self.run_epoch(False, val_loader, model, criterion)
 
-	    # metrics
-	    metrics = compute_metrics(y_true, y_pred)
+            scheduler.step(val_loss)
 
-	    # ---- store metadata in the trial ---- (later a dataclass maybe)
-	    trial.set_user_attr("metrics", metrics)
+        # ---- compute metrics at the end ----
+        y_true, y_pred = self.get_predictions(val_loader, model)
+        metrics = compute_metrics(y_true, y_pred)
+        trial.set_user_attr("metrics", metrics)
 
-	    return val_loss
+        return val_loss
 
-
-    # preds
+    # ---------------------------------------------------------
+    # Predictions
+    # ---------------------------------------------------------
     def get_predictions(self, loader, model):
-	    model.eval()
+        model.eval()
 
-	    preds, trues = [], []
+        preds, trues = [], []
 
-	    with torch.no_grad():
-	        for batch in loader:
-	            batch = batch.to(self.device)
+        with torch.no_grad():
+            for batch in loader:
+                batch = batch.to(self.device)
 
-	            y_hat = model(batch.z, batch.pos, batch.batch).squeeze(-1) # ipt. for shapes
-	            y = batch.y.squeeze(-1).float()
+                y_hat = model(batch.z, batch.pos, batch.batch).squeeze(-1)
+                y = batch.y.squeeze(-1).float()
 
-	            preds.append(y_hat.cpu())
-	            trues.append(y.cpu())
+                preds.append(y_hat.cpu())
+                trues.append(y.cpu())
 
-	    preds = torch.cat(preds)
-	    trues = torch.cat(trues)
-	    return trues, preds
-
-
+        preds = torch.cat(preds)
+        trues = torch.cat(trues)
+        return trues, preds
 
 
-"""
-
-create_model_from_params vs. create_model: You have two methods for creating a model:
-
-create_model_from_params(self, params) uses SchNetRegressor.
-
-create_model(self, trial, ...) uses the base SchNet (from torch_geometric.nn).
-
-Recommendation: You should stick to one model definition. If SchNetRegressor is your final model 
-(which is likely, as the base SchNet usually needs a final regression head), 
-the create_model function used in the Optuna objective should also return an instance of SchNetRegressor instead of SchNet.
-"""
 
 
-"""
 
-clenaer objective
 
-def objective(self, trial, **kwargs):
-    # Extract SchNet-specific parameters, using .get() for safe defaults
-    hidden_channels_opts = kwargs.get("hidden_channels_opts", [32, 64])
-    num_filters_opts = kwargs.get("num_filters_opts", [32, 64])
-    num_interactions_low = kwargs.get("num_interactions_low", 1)
-    num_interactions_high = kwargs.get("num_interactions_high", 5)
-    
-    # Extract general parameters
-    batch_size_opts = kwargs.get("batch_size_opts", [16])
-    lr_low = kwargs.get("lr_low", 1e-4)
-    lr_high = kwargs.get("lr_high", 1e-2)
 
-    # --- Optuna suggestions ---
-    batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
-    lr = trial.suggest_loguniform("lr", lr_low, lr_high)
-
-    # The rest of your logic follows...
-    # ...
-"""

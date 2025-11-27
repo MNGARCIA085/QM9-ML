@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 import optuna
 from torch_geometric.loader import DataLoader
+from src.utils.metrics import compute_metrics
 
 
 class BaseTuner:
@@ -78,38 +79,60 @@ class BaseTuner:
         optimizer = torch.optim.Adam(model.parameters(), lr=best_params["lr"])
         criterion = nn.MSELoss()
 
+
+        train_losses = []
+        val_losses = []
+
+
         for epoch in range(self.epochs):
             train_loss = self.run_epoch(True, train_loader, model, criterion, optimizer)
-            val_loss   = self.run_epoch(False, val_loader, model, criterion)
+            val_loss = self.run_epoch(False, val_loader, model, criterion)
+
+
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
+
+            # if i want a history per metric I can write a fn. eval_one_epcoch and calculate metrics
+
             print(f"[BEST MODEL] Epoch {epoch+1}/{self.epochs} | train={train_loss:.4f} | val={val_loss:.4f}")
 
 
-        # ---- compute additional metrics ----
-        y_true, y_pred = self.get_predictions(val_loader, model)
 
-        # metrics (compute again; for my best model for trained for a larger period of time)
-        from src.utils.metrics import compute_metrics
-        metrics = compute_metrics(y_true, y_pred)
+        # ---- compute additional metrics (for train and val; final metrics) ----
+        train_metrics = self.evaluate_on(train_loader, model)
+        val_metrics = self.evaluate_on(val_loader, model)
 
 
-    
-        # return
+        # --- Return results ---
         return(
                 {
                     "model": model,
-                    "train_loss": train_loss,
-                    "val_loss": val_loss, # later history
-                    "val_metrics": metrics,
+                    "train":
+                        {
+                            "losses": train_losses,
+                            "metrics": train_metrics,
+                            "loss": train_loss,
+                        },
+                    "val":{
+                        "losses": val_losses,
+                        "metrics": val_metrics,
+                        "loss": val_loss, # maybe redundant, is MSE
+                    },
                     "hyperparams": best_params,
                 }
             )
 
-        #return model
 
 
+    # get preds
     def get_preds(self, loader, model):
         """Child must implement. Returns y_true, y_pred"""
         raise NotImplementedError
+
+    # evaluate a given loader
+    def evaluate_on(self, loader, model):
+        y_true, y_pred = self.get_predictions(loader, model)
+        return compute_metrics(y_true, y_pred)
 
 
     

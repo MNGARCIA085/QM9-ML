@@ -2,7 +2,7 @@ import mlflow
 import os
 from mlflow.tracking import MlflowClient
 from pathlib import Path
-#from .plots import plot_cm, plot_roc, plot_train_val
+from .plots import plot_losses
 
 
 # Project root (2 levels up from this file)
@@ -17,8 +17,6 @@ os.makedirs(artifact_dir, exist_ok=True)
 
 
 
-
-
 # logging (for the tuning exps)
 def logging(exp_name, run_name, artifacts, results, model_type):
 
@@ -27,9 +25,6 @@ def logging(exp_name, run_name, artifacts, results, model_type):
 
     # run
     with mlflow.start_run(run_name=run_name):
-
-        print(results)
-
 
         # Tags
         mlflow.set_tag("model_type", model_type)
@@ -42,42 +37,25 @@ def logging(exp_name, run_name, artifacts, results, model_type):
         mlflow.log_param("subset", artifacts["subset"])
         mlflow.log_param("target", str(artifacts["target"]))
 
-
-        # Metrics (shared)
-        #for m in ["mse", "rmse", "mae", "r2", "ev"]:
-        #    mlflow.log_metric(m, getattr(results["val_metrics"], m)) # results.val.metrics
-        #print(results)
-        mlflow.log_metric("mse", results["val_metrics"]["mse"])
-
+        # Metrics
+        for name, value in results["val"]["metrics"].items():
+            mlflow.log_metric(f"val_{name}", value)
 
         # Model (is always a torch model)        
-        mlflow.pytorch.log_model(results["model"], artifact_path="model")
-
-
-        """
+        mlflow.pytorch.log_model(results["model"], name="model") # artifact_path
+        
         # training curves
-        loss_path = plot_train_val(results.train.losses, results.val.losses, "loss_curve.png", 'Loss')
+        loss_path = plot_losses(results["train"]["losses"], results["val"]["losses"], "loss_curve.png", 'Loss')
         mlflow.log_artifact(loss_path)
         os.remove(loss_path)
-
-
-        acc_path = plot_train_val(results.train.accs, results.val.accs, "acc_curve.png", 'Accuracy')
-        mlflow.log_artifact(acc_path)
-        os.remove(acc_path)  
-        """
-
+ 
         # hyperparams (differnt dict depending on the model)
         mlflow.log_params(results["hyperparams"]) # results.hyperparams if i use a datatype
 
 
 
-
-
-
-
-
-# get best model data -> aeqpt!!!!!!!!!!!!!!!!!!
-def select_best_model(experiment_name, run_name='tuning', metric="mse", model_type=None, data_version="v1"):
+# get best model data
+def select_best_model(experiment_name, run_name='tuning', metric="val_mse", model_type=None, data_version="v1"):
     """
     Select the best model overall or the best one of a specific type.
     

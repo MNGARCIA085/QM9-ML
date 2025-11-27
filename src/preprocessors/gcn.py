@@ -14,7 +14,7 @@ class GCNPreprocessor(BasePreprocessor):
 
 
     def _format_dataset(self, dataset, is_inference):
-        """Extracts atomic numbers (z) and (optionally) the target (y)."""
+        """Extracts z and edge_index; and optionally the targey y"""
 
         target_col = self.target
 
@@ -24,7 +24,7 @@ class GCNPreprocessor(BasePreprocessor):
             d_new = d.clone()
 
             # remove unwanted fields
-            for field in ["x", "edge_attr", "name", "smiles", "idx"]:
+            for field in ["x", "edge_attr", "pos", "name", "smiles", "idx"]:
                 if hasattr(d_new, field):
                     delattr(d_new, field)
 

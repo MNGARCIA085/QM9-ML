@@ -17,23 +17,38 @@ class GCNTuner(BaseTuner):
         return SimpleGCN(hidden=params["hidden"]).to(self.device)
 
 
-    # see latr if it is common
-    def run_epoch(self, train, loader, model, criterion, optimizer=None): # maybe mode instead of train
+    # run epoch
+    def run_epoch(self, train, loader, model, criterion, optimizer=None):
         device = self.device
-        model.train() if optimizer else model.eval()
+
+        if train:
+            model.train()
+        else:
+            model.eval()
+
         total_loss = 0
-        for batch in loader:
-            batch = batch.to(device)
-            out = model(batch)
-            pred = out.squeeze(-1)
-            target = batch.y.squeeze(-1)
-            loss = criterion(pred, target)
-            if optimizer:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-            total_loss += loss.item() * batch.num_graphs
+
+        # Use no_grad only for validation
+        context = torch.enable_grad() if train else torch.no_grad()
+        with context:
+            for batch in loader:
+                batch = batch.to(device)
+
+                out = model(batch)
+                pred = out.squeeze(-1)
+                target = batch.y.squeeze(-1)
+
+                loss = criterion(pred, target)
+
+                if train:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+
+                total_loss += loss.item() * batch.num_graphs
+
         return total_loss / len(loader.dataset)
+
 
 
     # ---------------------------------------------------------
@@ -46,7 +61,15 @@ class GCNTuner(BaseTuner):
 
 
     # see later if its not common to all classes
-    def objective(self, trial, batch_size_opts=[16, 32], hidden_opts=[32, 64, 128], lr_low=1e-4, lr_high=1e-2):
+    def objective(self, trial, **kwargs):
+
+        # specific params
+        batch_size_opts = kwargs.get('batch_size_opts', [16, 32])
+        hidden_opts  = kwargs.get('hidden_opts', [32, 64, 128])
+        lr_low = kwargs.get("lr_low", 1e-4)
+        lr_high = kwargs.get("lr_high", 1e-2)
+
+
         batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
         lr = trial.suggest_loguniform("lr", lr_low, lr_high)
 

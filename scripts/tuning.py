@@ -8,7 +8,7 @@ from src.tuning.registry import TuningRegistry
 from src.tuning.mlp import MLPTuner
 from src.tuning.gcn import GCNTuner
 from src.tuning.schnet import SchNetTuner
-
+from src.utils.logging import logging
 
 
 
@@ -34,11 +34,14 @@ def main(cfg: DictConfig):
     )
     train_ds, val_ds = prep.preprocess()
 
+
+    artifacts = prep.get_artifacts()
+
     tuner = TuningRegistry.create(
             model_type,
             train_ds=train_ds,
             val_ds=val_ds,
-            epochs=3,
+            epochs=10,
             epochs_trials=3,
         )
 
@@ -48,14 +51,8 @@ def main(cfg: DictConfig):
                                              )
 
 
-    from src.utils.logging import logging
+    
 
-    # for a quick test
-    artifacts = {
-        "val_ratio": 0.2,
-        "subset": 1000,
-        "target": 0
-    }
 
     logging('test', 'tuning', artifacts, results, model_type)
     

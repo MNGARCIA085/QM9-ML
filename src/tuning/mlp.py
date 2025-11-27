@@ -20,18 +20,33 @@ class MLPTuner(BaseTuner):
 
     # run one epoch; maybe later a common fn.
     def run_epoch(self, train, loader, model, criterion, optimizer=None):
-        model.train() if train else model.eval()
+        device = self.device
+
+        if train:
+            model.train()
+            context = torch.enable_grad()
+        else:
+            model.eval()
+            context = torch.no_grad()
+
         total_loss = 0
-        for batch in loader:
-            batch = batch.to(self.device)
-            out = model(batch)
-            loss = criterion(out.view(-1), batch.y.view(-1).float())
-            if train:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-            total_loss += loss.item() * batch.num_graphs
+
+        with context:
+            for batch in loader:
+                batch = batch.to(device)
+
+                out = model(batch)
+                loss = criterion(out.view(-1), batch.y.view(-1).float())
+
+                if train:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+
+                total_loss += loss.item() * batch.num_graphs
+
         return total_loss / len(loader.dataset)
+
     
 
 
@@ -70,9 +85,15 @@ class MLPTuner(BaseTuner):
         return SimpleMLP(hidden=hidden).to(self.device)
 
 
+    def objective(self, trial, **kwargs):
+        
+        # specific params
+        batch_size_opts = kwargs.get('batch_size_opts', [16, 32])
+        hidden_opts  = kwargs.get('hidden_opts', [32, 64, 128])
+        lr_low = kwargs.get("lr_low", 1e-4)
+        lr_high = kwargs.get("lr_high", 1e-2)
 
 
-    def objective(self, trial, batch_size_opts=[16, 32], hidden_opts=[32, 64, 128], lr_low=1e-4, lr_high=1e-2):
         batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
         lr = trial.suggest_loguniform("lr", lr_low, lr_high)
 

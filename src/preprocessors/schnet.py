@@ -12,19 +12,27 @@ class SchNetPreprocessor(BasePreprocessor):
         
     
     def _format_dataset(self, dataset, is_inference):
+        """Extracts atomic numbers (z) , pos, and (optionally) the target (y)."""
+
         target_col = self.target
 
-        processed = []
+        out = []
+
         for d in dataset:
-            d_new = d.clone()  # <-- keeps all fields: pos, z, edge_index, etc; then i should remove edge_index...!!!!!!!!!!!!!! (z, pos, batch)
+            d_new = d.clone()
 
-            if is_inference:
-                # remove y safely if exists
-                if hasattr(d_new, "y"):
-                    del d_new.y
-            else:
+            # remove unwanted fields
+            for field in ["x", "edge_attr", "edge_index", "name", "smiles", "idx"]:
+                if hasattr(d_new, field):
+                    delattr(d_new, field)
+
+            # Handle inference/no-inference target
+            if not is_inference:
                 d_new.y = d.y[:, target_col].unsqueeze(1)
+            else:
+                if hasattr(d_new, "y"):
+                    delattr(d_new, "y")
 
-            processed.append(d_new)
+            out.append(d_new)
 
-        return processed
+        return out

@@ -48,7 +48,7 @@ class BasePreprocessor:
 
 
     # alwasy load tiny version
-    def _load_datasetv7(self):
+    def _load_test_dataset(self):
         import os
         cache_path = os.path.join(self.root, f"qm9_subset_150.pt")
 
@@ -141,7 +141,7 @@ class BasePreprocessor:
 
     def preprocess_test(self):
         """Workflow for test: Load -> Format -> Return."""
-        dataset = self._load_dataset()
+        dataset = self._load_test_dataset()
         return self._format_dataset(dataset, is_inference=False)
 
     def preprocess_inference(self):

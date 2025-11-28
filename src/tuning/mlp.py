@@ -8,8 +8,18 @@ from src.utils.metrics import compute_metrics
 
 
 
+from src.training.mlp import MLPTrainer
+
+
+
+
+
 @TuningRegistry.register("mlp")
 class MLPTuner(BaseTuner):
+
+
+    trainer_cls = MLPTrainer
+
     def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)
 
@@ -18,64 +28,7 @@ class MLPTuner(BaseTuner):
         #...................
 
 
-    # run one epoch; maybe later a common fn.
-    def run_epoch(self, train, loader, model, criterion, optimizer=None):
-        device = self.device
-
-        if train:
-            model.train()
-            context = torch.enable_grad()
-        else:
-            model.eval()
-            context = torch.no_grad()
-
-        total_loss = 0
-
-        with context:
-            for batch in loader:
-                batch = batch.to(device)
-
-                out = model(batch)
-                loss = criterion(out.view(-1), batch.y.view(-1).float())
-
-                if train:
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-
-                total_loss += loss.item() * batch.num_graphs
-
-        return total_loss / len(loader.dataset)
-
     
-
-
-    # get preds
-    def get_predictions(self, loader, model):
-        model.eval()
-
-        preds = []
-        trues = []
-
-        with torch.no_grad():
-            for batch in loader:
-                batch = batch.to(self.device)
-
-                y_hat = model(batch)                 # shape [batch_size]
-                y = batch.y.view(-1).to(self.device) # ensure [batch_size]
-
-                preds.append(y_hat.cpu())
-                trues.append(y.cpu())
-
-        preds = torch.cat(preds)
-        trues = torch.cat(trues)
-        return trues, preds
-
-
-    # create model
-    def create_model_from_params(self, params):
-        return SimpleMLP(hidden=params["hidden"]).to(self.device)
-
 
     # ---------------------------------------------------------
     # Tuning with Optuna
@@ -97,21 +50,27 @@ class MLPTuner(BaseTuner):
         batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
         lr = trial.suggest_loguniform("lr", lr_low, lr_high)
 
-        train_loader, val_loader = self.create_loaders(batch_size)
+
+        trainer = self.trainer_cls(self.train_ds, self.val_ds)
+
+        train_loader, val_loader = trainer.create_loaders(batch_size)
+
+
 
         model = self.create_model(trial, hidden_opts)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion = nn.MSELoss()
 
+
         for _ in range(self.epochs_trials): 
-            self.run_epoch(True, train_loader, model, criterion, optimizer)
+            trainer.run_epoch(True, train_loader, model, criterion, optimizer)
         
 
         # final validation loss
-        val_loss = self.run_epoch(False, val_loader, model, criterion)
+        val_loss = trainer.run_epoch(False, val_loader, model, criterion)
 
-        # ---- compute additional metrics ----
-        y_true, y_pred = self.get_predictions(val_loader, model)
+        # ---- compute additional metrics ----        
+        y_true, y_pred = trainer.get_predictions(val_loader, model)
 
 
         # metrics

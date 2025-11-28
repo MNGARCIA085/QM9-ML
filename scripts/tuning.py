@@ -11,7 +11,10 @@ from src.tuning.schnet import SchNetTuner
 from src.utils.logging import logging
 
 
-
+from src.training.registry import TrainerRegistry
+from src.training.mlp import MLPTrainer
+from src.training.gcn import GCNTrainer
+from src.training.schnet import SchNetTrainer
 
 
 
@@ -43,20 +46,34 @@ def main(cfg: DictConfig):
             model_type,
             train_ds=train_ds,
             val_ds=val_ds,
-            epochs=10,
-            epochs_trials=3,
+            epochs=5,
+            epochs_trials=2,
         )
 
 
-    results, best_params, attrs = tuner.tune(n_trials=3,
-                                             **cfg_tuning,
-                                             )
+    best_params, attrs = tuner.tune(n_trials=3,
+                                    **cfg_tuning,
+                                    )
 
+
+    # train best model
+    trainer = TrainerRegistry.create(
+            model_type,
+            train_ds=train_ds,
+            val_ds=val_ds,
+            epochs=5,
+        )
+
+    results = trainer.train_best_model(best_params)
 
     
-
-
     logging('test', 'tuning', artifacts, results, model_type)
+
+
+    # evaluation
+    # select best model..........
+    #loader = DataLoader(val_ds, batch_size=32, shuffle=False)
+    #metrics = trainer.evaluate(loader, model)
     
 
     """

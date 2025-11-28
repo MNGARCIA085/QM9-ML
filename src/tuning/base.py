@@ -7,15 +7,18 @@ import torch.nn as nn
 import torch.optim as optim
 import optuna
 from torch_geometric.loader import DataLoader
-from src.utils.metrics import compute_metrics
 
+import mlflow
+import os
+import tempfile
+
+
+from src.utils.metrics import compute_metrics
 from src.callbacks.early_stopping import EarlyStopping
-from src.callbacks.checkpoint import ModelCheckpoint, MLflowModelCheckpoint
+from src.callbacks.checkpoint import ModelCheckpoint
 from src.callbacks.lr_schedulers import get_plateau_scheduler
 
 
-
-import mlflow
 
 
 class BaseTuner:
@@ -88,7 +91,7 @@ class BaseTuner:
         criterion = nn.MSELoss()
 
 
-        # ---- import and use built-in scheduler (clean!) ----
+        # ---- import and use built-in scheduler (clean!) ---- later -> logg this.
         scheduler = get_plateau_scheduler(
             optimizer,
             mode="min",
@@ -98,11 +101,9 @@ class BaseTuner:
         )
 
         # ---- early stopping and model checkpoint  ----
-        early_stop = EarlyStopping(patience=30, mode="min")
-        
-        #ckpt = ModelCheckpoint("best_model.pt", monitor="val_loss"); note only saves 1 model
-        # ckpt = MLflowModelCheckpoint(monitor="val_loss", mode="min")
-
+        early_stop = EarlyStopping(patience=5, mode="min")
+        ckpt_path = tempfile.mktemp(suffix=".pt") # creates something like /tmp/tmpabcd1234.pt, goal: avoid collisions
+        ckpt = ModelCheckpoint(ckpt_path, mode="min") 
 
 
         train_losses = []
@@ -126,8 +127,9 @@ class BaseTuner:
             scheduler.step(val_loss)
 
             # ---- 2) Checkpoint ----
-            #ckpt.step(val_loss, model)
-            #ckpt.step(val_loss, model)
+            is_best = ckpt.step(val_loss, model)
+            if is_best:
+                print("Checkpoint updated")
 
 
             # ---- 3) Early stopping ----
@@ -139,12 +141,11 @@ class BaseTuner:
 
 
         # Load best model
-        #model.load_state_dict(torch.load("best_model.pt"))
+        model.load_state_dict(torch.load(ckpt_path))
+
+        # Remove temporary checkpoint
+        os.remove(ckpt_path)
         
-        #best_model_path = mlflow.artifacts.download_artifacts("checkpoints/best_model.pt")
-        #model.load_state_dict(torch.load(best_model_path))
-
-
         # ---- compute additional metrics (for train and val; final metrics) ----
         train_metrics = self.evaluate_on(train_loader, model)
         val_metrics = self.evaluate_on(val_loader, model)

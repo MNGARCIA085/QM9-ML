@@ -21,7 +21,6 @@ from src.training.schnet import SchNetTrainer
 @hydra.main(config_path="../config", config_name="config", version_base=None)
 def main(cfg: DictConfig):
 
-
     # get model type (nn, tree.....)
     model_type = cfg.model_type
     print(f"\nSelected model: {model_type}")
@@ -32,8 +31,9 @@ def main(cfg: DictConfig):
     # preprocessing
     prep = PreprocessorRegistry.create(
         model_type,
-        target=0,
-        subset=1000,
+        val_ratio=cfg.preprocessor.val_ratio,
+        target=cfg.preprocessor.target,
+        subset=cfg.preprocessor.subset,
     )
     train_ds, val_ds = prep.preprocess()
 
@@ -44,12 +44,12 @@ def main(cfg: DictConfig):
             model_type,
             train_ds=train_ds,
             val_ds=val_ds,
-            epochs=5,
-            epochs_trials=2,
+            epochs=cfg.shared.epochs,
+            epochs_trials=cfg.shared.epochs_trials,
         )
 
 
-    best_params, attrs = tuner.tune(n_trials=3,
+    best_params, attrs = tuner.tune(n_trials=cfg.shared.num_trials,
                                     **cfg_tuning,
                                     )
 

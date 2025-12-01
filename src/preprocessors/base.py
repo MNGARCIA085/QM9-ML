@@ -67,52 +67,7 @@ class BasePreprocessor:
 
         return self._test_dataset
 
-    # --------------------------------
-    # Lazy-loading with subset caching
-    # --------------------------------
     
-    def _load_datasetOK(self):
-        import os
-        #Loads dataset or subset from disk if available.
-        if self._dataset is not None:
-            return self._dataset
-
-        # -------------------------------
-        # 1) If subset requested, check cache
-        # -------------------------------
-        if self.subset:
-            cache_path = os.path.join(self.root, f"qm9_subset_{self.subset}.pt")
-
-            if os.path.exists(cache_path):
-                print(f"[INFO] Loading cached QM9 subset ({self.subset}) from {cache_path}")
-                self._dataset = torch.load(cache_path,  weights_only=False)
-                return self._dataset
-
-        # -------------------------------
-        # 2) Load full dataset (first time)
-        # -------------------------------
-        print("[INFO] Loading full QM9 dataset (first time)...")
-        full_dataset = self.dataset_cls(root=self.root, transform=self.transform)
-
-        # -------------------------------
-        # 3) Apply subset slicing (if needed)
-        # -------------------------------
-        if self.subset:
-            subset_ds = full_dataset[:self.subset]
-            
-            # Save the subset to avoid loading full QM9 next time
-            print(f"[INFO] Saving QM9 subset ({self.subset}) to cache...")
-            os.makedirs(self.root, exist_ok=True)
-            torch.save(subset_ds, cache_path)
-
-            self._dataset = subset_ds
-        else:
-            self._dataset = full_dataset
-
-        return self._dataset
-    
-
-
     # -------------------------
     # Split train/val
     # -------------------------

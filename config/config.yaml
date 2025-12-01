@@ -1,6 +1,8 @@
 model_type: "mlp"  # mlp, gcn, schnet
 defaults:
-  #- preprocessor: preprocessor; put later, val size.......
+  - shared/training
+  - shared/tuning 
+  - preprocessor: preprocessor
   - tuning: mlp
   #- override hydra/launcher: joblib
   - _self_

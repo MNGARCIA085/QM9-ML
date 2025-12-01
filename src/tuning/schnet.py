@@ -13,8 +13,8 @@ class SchNetTuner(BaseTuner):
 
     trainer_cls = SchNetTrainer
 
-    def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
-        super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)
+    def __init__(self, train_ds, val_ds, epochs_trials=5, device=None, **kwargs):
+        super().__init__(train_ds, val_ds, epochs_trials=epochs_trials, device=device)
 
     
 
@@ -44,13 +44,13 @@ class SchNetTuner(BaseTuner):
         # SchNet-specific params
         hidden_channels_opts = kwargs.get("hidden_channels_opts", [32, 64])
         num_filters_opts = kwargs.get("num_filters_opts", [32, 64])
-        num_interactions_low = kwargs.get("num_interactions_low", 1)
-        num_interactions_high = kwargs.get("num_interactions_high", 5)
+        num_interactions_low = kwargs.get("lr", {}).get("low", 1)
+        num_interactions_high = kwargs.get("lr", {}).get("high", 5)
 
         # General parameters
         batch_size_opts = kwargs.get("batch_size_opts", [16])
-        lr_low = kwargs.get("lr_low", 1e-4)
-        lr_high = kwargs.get("lr_high", 1e-2)
+        lr_low = kwargs.get("lr", {}).get("low", 1e-4)
+        lr_high = kwargs.get("lr", {}).get("high", 1e-2)
 
         # Optuna sampling
         batch_size = trial.suggest_categorical("batch_size", batch_size_opts)

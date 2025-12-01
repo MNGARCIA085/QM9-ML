@@ -9,10 +9,9 @@ class BaseTuner:
 
     trainer_cls = None   # subclasses must define this
 
-    def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None):
+    def __init__(self, train_ds, val_ds, epochs_trials=5, device=None):
         self.train_ds = train_ds
         self.val_ds = val_ds
-        self.epochs = epochs  
         self.epochs_trials = epochs_trials # small epochs for quick test
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.best_params = None

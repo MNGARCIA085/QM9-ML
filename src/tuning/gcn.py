@@ -12,8 +12,8 @@ class GCNTuner(BaseTuner):
 
     trainer_cls = GCNTrainer
 
-    def __init__(self, train_ds, val_ds, epochs=10, epochs_trials=5, device=None, **kwargs):
-        super().__init__(train_ds, val_ds, epochs=epochs, epochs_trials=epochs_trials, device=device)
+    def __init__(self, train_ds, val_ds, epochs_trials=5, device=None, **kwargs):
+        super().__init__(train_ds, val_ds, epochs_trials=epochs_trials, device=device)
     
     # create model
     def create_model_from_params(self, params):
@@ -34,8 +34,8 @@ class GCNTuner(BaseTuner):
         # specific params
         batch_size_opts = kwargs.get('batch_size_opts', [16, 32])
         hidden_opts  = kwargs.get('hidden_opts', [32, 64, 128])
-        lr_low = kwargs.get("lr_low", 1e-4)
-        lr_high = kwargs.get("lr_high", 1e-2)
+        lr_low = kwargs.get("lr", {}).get("low", 1e-4)
+        lr_high = kwargs.get("lr", {}).get("high", 1e-2)
 
         batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
         lr = trial.suggest_loguniform("lr", lr_low, lr_high)

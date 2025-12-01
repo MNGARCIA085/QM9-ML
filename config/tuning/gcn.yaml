@@ -1,6 +1,6 @@
 batch_size_opts: [32, 64]
 hidden_opts: [64, 128]
-#num_layers_opts: [2, 3, 4]
-#lr_range: [1e-4, 5e-3]
-lr_low: 1e-4
-lr_high: 1e-2
+lr:
+  low: 0.0001
+  high: 0.01
+

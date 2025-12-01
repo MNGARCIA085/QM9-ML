@@ -24,7 +24,7 @@ class GCNPreprocessor(BasePreprocessor):
             d_new = d.clone()
 
             # remove unwanted fields
-            for field in ["x", "edge_attr", "pos", "name", "smiles", "idx"]:
+            for field in ["edge_attr", "name", "smiles", "idx"]: # keep "x" and "pos" to infere num_nodes
                 if hasattr(d_new, field):
                     delattr(d_new, field)
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]     # project/
 DATA_DIR = ROOT / "data" / "QM9"
-#DATA_DIR = ROOT / "data" / "QM9 / qm9_subset_1000.pt"
+
 
 
 
@@ -14,8 +14,18 @@ class BasePreprocessor:
     """
     Base class for data preprocessing, handling common tasks like loading, 
     subsetting, splitting, and configuration.
+
+    This class provides a simple and reproducible way to work with the QM9 dataset
+    while keeping a fixed test split for final evaluation.
+
+    The dataset is loaded once for training and hyperparameter tuning, where all
+    samples except the last 200 are used. The final 200 molecules of the dataset
+    are reserved as a held-out test set to simulate a real-world evaluation
+    scenario. During training/tuning only the training subset is loaded; the test
+    subset is loaded separately and only when needed for final evaluation.
+
     """
-    def __init__(self, dataset_cls=QM9, root=DATA_DIR,  #data/QM9
+    def __init__(self, dataset_cls=QM9, root=DATA_DIR,
                  transform=None, target=0, val_ratio=0.2,
                  seed=42, subset=None):
 
@@ -28,6 +38,7 @@ class BasePreprocessor:
         self.subset = subset
         # Initialize internal storage for the dataset
         self._dataset = None
+        self._test_dataset = None
 
     # -------------------------
     # Loading dataset (Lazy-loaded)
@@ -42,21 +53,19 @@ class BasePreprocessor:
                 # Apply subset slicing
                 dataset = dataset[:self.subset]
             
-            self._dataset = dataset
+            self._dataset = dataset[-200:] # all except last 200
             
         return self._dataset
 
 
     # alwasy load tiny version
     def _load_test_dataset(self):
-        import os
-        cache_path = os.path.join(self.root, f"qm9_subset_150.pt")
+        """Load only the test slice (last 200 samples)."""
+        if self._test_dataset is None:
+            dataset = self.dataset_cls(root=self.root, transform=self.transform)
+            self._test_dataset = dataset[-200:]
 
-
-        if os.path.exists(cache_path):
-            print(f"[INFO] Loading cached QM9 subset ({self.subset}) from {cache_path}")
-            self._dataset = torch.load(cache_path,  weights_only=False)
-            return self._dataset
+        return self._test_dataset
 
     # --------------------------------
     # Lazy-loading with subset caching

@@ -6,6 +6,7 @@ from src.models.schnet import SchNetRegressor
 from src.utils.metrics import compute_metrics
 from .registry import TrainerRegistry
 
+from torch_geometric.loader import DataLoader
 
 from src.models.gcn import SimpleGCN
 
@@ -43,6 +44,31 @@ class GCNTrainer(BaseTrainer):
         trues = torch.cat(trues)
 
         return trues, preds
+
+
+    # preds
+    def predict(self, loader_or_data, model, batch_size=32):
+
+
+        if not isinstance(loader_or_data, DataLoader):
+            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
+        else:
+            loader = loader_or_data
+
+
+        model.eval()
+        preds = []
+
+        with torch.no_grad():
+            for batch in loader:
+                batch = batch.to(self.device)
+                out = model(batch)          # [num_graphs, 1]
+                preds.append(out.view(-1).cpu())
+                y = batch.y.view(-1).cpu()  # [num_graphs]
+
+        preds = torch.cat(preds)
+        return preds
+
 
 
     # run epoch

@@ -2,10 +2,8 @@ from .base import BaseTuner
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from src.utils.metrics import compute_metrics
 from .registry import TuningRegistry
 from src.models.gcn import SimpleGCN
-
 from src.training.gcn import GCNTrainer
 
 
@@ -22,13 +20,13 @@ class GCNTuner(BaseTuner):
         return SimpleGCN(hidden=params["hidden"]).to(self.device)
 
     
-
     # ---------------------------------------------------------
     # Tuning with Optuna
     # ---------------------------------------------------------
     def create_model(self, trial, hidden_opts):
         hidden = trial.suggest_categorical("hidden", hidden_opts)
         return SimpleGCN(hidden=hidden).to(self.device)
+
 
     # see later if its not common to all classes
     def objective(self, trial, **kwargs):
@@ -45,33 +43,24 @@ class GCNTuner(BaseTuner):
         # trainer
         trainer = self.trainer_cls(self.train_ds, self.val_ds) 
 
+        # loaders
         train_loader, val_loader = trainer.create_loaders(batch_size)
 
-
-
+        # model, optimizer, criterion
         model = self.create_model(trial, hidden_opts=hidden_opts)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion = nn.MSELoss()
 
-
-
-        
-
-
+        # training loop
         for _ in range(self.epochs_trials):
             trainer.run_epoch(True, train_loader, model, criterion, optimizer)
         val_loss = trainer.run_epoch(False, val_loader, model, criterion) # only last
         
-
-        # ---- compute additional metrics ----
-        
-        y_true, y_pred = trainer.get_predictions(val_loader, model) 
-
-        # metrics
-        metrics = compute_metrics(y_true, y_pred)
+        # ---- compute metrics ----
+        val_metrics = trainer.evaluate(val_loader, model)
 
         # ---- store metadata in the trial ----
-        trial.set_user_attr("metrics", metrics)
+        trial.set_user_attr("metrics", val_metrics)
 
         return val_loss
 

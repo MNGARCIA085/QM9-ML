@@ -1,13 +1,12 @@
 model_type: "mlp"  # mlp, gcn, schnet
 defaults:
-  #- preprocessor: preprocessor
-  #- tuning: ${model_type}
+  #- preprocessor: preprocessor; put later, val size.......
   - tuning: mlp
-  #- evaluation: evaluation
   #- override hydra/launcher: joblib
   - _self_
 
 
 
 random_state: 42
-experiment_name: qm9
+exp_name: qm9
+run_tuning_name: tuning

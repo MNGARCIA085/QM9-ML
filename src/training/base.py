@@ -27,26 +27,28 @@ class BaseTrainer:
 
 
 
-    # loaders
-    def create_loaders(self, batch_size):
-        train_loader = DataLoader(self.train_ds, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(self.val_ds, batch_size=batch_size, shuffle=False)
-        #test_loader = DataLoader(self.test_ds, batch_size=batch_size, shuffle=False)
-        return train_loader, val_loader, test_loader
-
-
-    # get preds
+    # get preds and labels
     def get_predictions(self, loader, model):
         """Child must implement. Returns y_true, y_pred"""
         raise NotImplementedError
 
-    # another fn. that returns only preds???????
+    # predict
+    def predict(self, loader_or_data, model, batch_size):
+        """Child must implement. Returns y_pred"""
+        raise NotImplementedError
 
     # evaluate a given loader
-    def evaluate(self, loader, model):
+    def evaluate(self, loader, model, batch_size=32):
+        """Evaluate the model on a dataset or DataLoader."""
+        
+        # If it's not already a DataLoader, wrap it
+        if not isinstance(loader, DataLoader):
+            loader = DataLoader(loader, batch_size=batch_size, shuffle=False)
+
         y_true, y_pred = self.get_predictions(loader, model)
         return compute_metrics(y_true, y_pred)
 
+    
     def run_epoch(self, train, loader, model, criterion, optimizer):
         raise NotImplementedError("Subclasses must implement it")
 

@@ -3,12 +3,9 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from src.models.schnet import SchNetRegressor
-from src.utils.metrics import compute_metrics
 from .registry import TuningRegistry
-
-
-
 from src.training.schnet import SchNetTrainer
+
 
 
 @TuningRegistry.register("schnet")
@@ -95,11 +92,9 @@ class SchNetTuner(BaseTuner):
             scheduler.step(val_loss)
 
         # ---- compute metrics at the end ----        
-        y_true, y_pred = trainer.get_predictions(val_loader, model)
-
-
-        metrics = compute_metrics(y_true, y_pred)
-        trial.set_user_attr("metrics", metrics)
+        val_metrics = trainer.evaluate(val_loader, model)
+        
+        trial.set_user_attr("metrics", val_metrics)
 
         return val_loss
 

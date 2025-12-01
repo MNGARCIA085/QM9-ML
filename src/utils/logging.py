@@ -125,14 +125,8 @@ insteado of order_by
 
 
 
-
-
-
-
-
-
-# log test results -> adapt!!!!!!!!!!!!!!
-def log_test_results(exp_name, tuning_run_id, model_type, results):
+# log test results
+def log_test_results(exp_name, tuning_run_id, model_type, metrics):
 
     # ensures artifact path is set
     mlflow.set_experiment(exp_name)
@@ -147,19 +141,9 @@ def log_test_results(exp_name, tuning_run_id, model_type, results):
 
         mlflow.log_param("model_type", model_type)
 
-        # Metrics (shared)
-        for m in ["accuracy", "precision", "recall", "f1"]:
-            mlflow.log_metric(m, getattr(results.metrics, m))
-
-        # Plots
-        cm_path = plot_cm(results.labels, results.preds)
-        mlflow.log_artifact(cm_path)
-        os.remove(cm_path)
-
-        roc_path = plot_roc(results.labels, results.probs)
-        mlflow.log_artifact(roc_path)
-        os.remove(roc_path)
-
+        # Metrics
+        for name, value in metrics.items():
+            mlflow.log_metric(f"val_{name}", value)
 
 
 
@@ -169,9 +153,6 @@ def log_test_results(exp_name, tuning_run_id, model_type, results):
 
 
 # analyze perfoemce when i move only one param
-
-
-
 
 
 

@@ -6,6 +6,7 @@ from src.models.schnet import SchNetRegressor
 from src.utils.metrics import compute_metrics
 from .registry import TrainerRegistry
 
+from torch_geometric.loader import DataLoader
 
 
 @TrainerRegistry.register("schnet")
@@ -16,6 +17,9 @@ class SchNetTrainer(BaseTrainer):
     # ---------------------------------------------------------
     # Predictions
     # ---------------------------------------------------------
+    
+
+    # returns preds AND true labels
     def get_predictions(self, loader, model):
         model.eval()
 
@@ -31,11 +35,37 @@ class SchNetTrainer(BaseTrainer):
                 preds.append(y_hat.cpu())
                 trues.append(y.cpu())
 
-        preds = torch.cat(preds)
         trues = torch.cat(trues)
+        preds = torch.cat(preds)
         return trues, preds
 
 
+
+    # for inference
+    def predict(self, loader_or_data, model, batch_size=32):
+        """Run inference and return only predictions."""
+
+        if not isinstance(loader_or_data, DataLoader):
+            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
+        else:
+            loader = loader_or_data
+
+        model.eval()
+        
+        preds = []
+
+        with torch.no_grad():
+            for batch in loader:
+                batch = batch.to(self.device)
+                y_hat = model(batch.z, batch.pos, batch.batch).squeeze(-1)
+                preds.append(y_hat.cpu())
+
+        return torch.cat(preds)
+
+
+
+
+    # run one epoch
     def run_epoch(self, train, loader, model, criterion, optimizer=None):
         if train:
             model.train()

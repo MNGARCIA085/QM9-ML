@@ -6,6 +6,7 @@ from src.models.schnet import SchNetRegressor
 from src.utils.metrics import compute_metrics
 from .registry import TrainerRegistry
 
+from torch_geometric.loader import DataLoader
 
 from src.models.mlp import SimpleMLP
 
@@ -37,6 +38,28 @@ class MLPTrainer(BaseTrainer):
         preds = torch.cat(preds)
         trues = torch.cat(trues)
         return trues, preds
+
+
+    # for inference
+    def predict(self, loader_or_data, model):
+
+        if not isinstance(loader_or_data, DataLoader):
+            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
+        else:
+            loader = loader_or_data
+
+        model.eval()
+
+        preds = []
+
+        with torch.no_grad():
+            for batch in loader:
+                batch = batch.to(self.device)
+                y_hat = model(batch)                 # shape [batch_size]
+                y = batch.y.view(-1).to(self.device) # ensure [batch_size]
+                preds.append(y_hat.cpu())
+
+        return torch.cat(preds)
 
 
 

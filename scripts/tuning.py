@@ -22,16 +22,14 @@ from src.training.schnet import SchNetTrainer
 def main(cfg: DictConfig):
 
 
-
-
     # get model type (nn, tree.....)
     model_type = cfg.model_type
     print(f"\nSelected model: {model_type}")
 
     cfg_tuning = OmegaConf.load(f"config/tuning/{model_type}.yaml")
 
-    print(cfg_tuning)
 
+    # preprocessing
     prep = PreprocessorRegistry.create(
         model_type,
         target=0,
@@ -39,9 +37,9 @@ def main(cfg: DictConfig):
     )
     train_ds, val_ds = prep.preprocess()
 
+    artifacts = prep.get_artifacts() # for later logging
 
-    artifacts = prep.get_artifacts()
-
+    # tuning
     tuner = TuningRegistry.create(
             model_type,
             train_ds=train_ds,
@@ -66,15 +64,10 @@ def main(cfg: DictConfig):
 
     results = trainer.train_best_model(best_params)
 
-    
-    logging('test', 'tuning', artifacts, results, model_type)
+    # logging
+    logging(cfg.exp_name, cfg.run_tuning_name, artifacts, results, model_type)
 
 
-    # evaluation
-    # select best model..........
-    #loader = DataLoader(val_ds, batch_size=32, shuffle=False)
-    #metrics = trainer.evaluate(loader, model)
-    
 
     """
     model, best_params, attrs = tuner.tune(n_trials=5,
@@ -82,10 +75,6 @@ def main(cfg: DictConfig):
                                              hidden_opts=[512],
                                              )
                                              """
-
-
-
-
 
 
 

@@ -4,13 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from src.models.mlp import SimpleMLP
 from .registry import TuningRegistry
-from src.utils.metrics import compute_metrics
-
-
-
 from src.training.mlp import MLPTrainer
-
-
 
 
 
@@ -26,8 +20,6 @@ class MLPTuner(BaseTuner):
         # Any MLPTuner-specific attributes
         #self.hidden_dim = kwargs.get("hidden_dim", 128)
         #...................
-
-
     
 
     # ---------------------------------------------------------
@@ -68,16 +60,12 @@ class MLPTuner(BaseTuner):
 
         # final validation loss
         val_loss = trainer.run_epoch(False, val_loader, model, criterion)
-
-        # ---- compute additional metrics ----        
-        y_true, y_pred = trainer.get_predictions(val_loader, model)
-
-
-        # metrics
-        metrics = compute_metrics(y_true, y_pred)
+      
+        # ---- compute metrics ----
+        val_metrics = trainer.evaluate(val_loader, model)
 
         # ---- store metadata in the trial ---- (later a dataclass maybe)
-        trial.set_user_attr("metrics", metrics)
+        trial.set_user_attr("metrics", val_metrics)
 
         # return
         return val_loss   # Optuna must optimize a scalar

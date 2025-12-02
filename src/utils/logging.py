@@ -3,9 +3,12 @@ import os
 from mlflow.tracking import MlflowClient
 from pathlib import Path
 from .plots import plot_losses
+import pandas as pd
+import uuid
 
 
 # Project root (2 levels up from this file)
+
 root_dir = Path(__file__).resolve().parents[2]
 
 # Tracking DB
@@ -14,6 +17,8 @@ mlflow.set_tracking_uri(f"sqlite:///{root_dir / 'mlflow.db'}")
 # Artifacts folder
 artifact_dir = root_dir / "mlruns"
 os.makedirs(artifact_dir, exist_ok=True)
+
+
 
 
 
@@ -54,16 +59,12 @@ def logging(exp_name, run_name, artifacts, results, model_type, trials_data):
 
         #----------trials--------------
         # Save to a temporary JSON
-        import pandas as pd
         df = pd.DataFrame(trials_data)
-        #path = "optuna_trials.json"
-        import uuid
-        path = f"optuna_trials_{uuid.uuid4().hex}.json"
+        path = f"optuna_trials_{uuid.uuid4().hex}.json" # maybe name from logging config
         df.to_json(path, orient="records", indent=2)
-
-        # Log as artifact
         mlflow.log_artifact(path)
-        os.remove(path)   # safe, MLflow copies the file into its storage before the remove happens.
+        os.remove(path)
+        
 
 
 
@@ -83,6 +84,18 @@ os.remove(path)
 
 
 """
+-------------------------------------
+Saving
+
+
+
+
+
+
+
+---------------------------------------
+Loading
+
 import mlflow
 
 client = mlflow.tracking.MlflowClient()
@@ -99,8 +112,6 @@ local_path = client.download_artifacts(run_id, artifacts[0].path)
 
 with open(local_path) as f:
     data = json.load(f)
-
-
 
 """
 

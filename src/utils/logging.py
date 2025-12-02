@@ -18,7 +18,7 @@ os.makedirs(artifact_dir, exist_ok=True)
 
 
 # logging (for the tuning exps)
-def logging(exp_name, run_name, artifacts, results, model_type):
+def logging(exp_name, run_name, artifacts, results, model_type, trials_data):
 
     # ensures artifact path is set
     mlflow.set_experiment(exp_name)
@@ -51,6 +51,60 @@ def logging(exp_name, run_name, artifacts, results, model_type):
  
         # hyperparams (differnt dict depending on the model)
         mlflow.log_params(results["hyperparams"]) # results.hyperparams if i use a datatype
+
+        #----------trials--------------
+        # Save to a temporary JSON
+        import pandas as pd
+        df = pd.DataFrame(trials_data)
+        #path = "optuna_trials.json"
+        import uuid
+        path = f"optuna_trials_{uuid.uuid4().hex}.json"
+        df.to_json(path, orient="records", indent=2)
+
+        # Log as artifact
+        mlflow.log_artifact(path)
+        os.remove(path)   # safe, MLflow copies the file into its storage before the remove happens.
+
+
+
+"""
+
+https://chatgpt.com/c/692e2037-86d0-8330-96dc-c7d7ba943843
+
+from hydra.core.hydra_config import HydraConfig
+
+run_dir = HydraConfig.get().run.dir
+path = f"{run_dir}/optuna_trials.csv"
+df.to_csv(path, index=False)
+mlflow.log_artifact(path)
+os.remove(path)
+
+"""
+
+
+"""
+import mlflow
+
+client = mlflow.tracking.MlflowClient()
+run_id = "<run_id>"
+
+# list artifacts in the "optuna" folder
+artifacts = client.list_artifacts(run_id, path="optuna")
+for a in artifacts:
+    print(a.path)
+
+
+
+local_path = client.download_artifacts(run_id, artifacts[0].path)
+
+with open(local_path) as f:
+    data = json.load(f)
+
+
+
+"""
+
+
 
 
 

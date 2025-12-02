@@ -49,7 +49,7 @@ def main(cfg: DictConfig):
         )
 
 
-    best_params, attrs = tuner.tune(n_trials=cfg.shared.num_trials,
+    best_params, attrs, trials_data = tuner.tune(n_trials=cfg.shared.num_trials,
                                     **cfg_tuning,
                                     )
 
@@ -65,7 +65,7 @@ def main(cfg: DictConfig):
     results = trainer.train_best_model(best_params)
 
     # logging
-    logging(cfg.exp_name, cfg.run_tuning_name, artifacts, results, model_type)
+    logging(cfg.exp_name, cfg.run_tuning_name, artifacts, results, model_type, trials_data)
 
 
 

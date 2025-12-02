@@ -49,7 +49,6 @@ class MLPTuner(BaseTuner):
         train_loader, val_loader = trainer.create_loaders(batch_size)
 
 
-
         model = self.create_model(trial, hidden_opts)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion = nn.MSELoss()

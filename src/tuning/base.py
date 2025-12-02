@@ -45,8 +45,23 @@ class BaseTuner:
         self.best_params = study.best_params
         self.best_attrs  = best_attrs   # metrics / extras (right now i just for my best trial for a few epochs)
 
+        # test
+        
+        rows = []
+        for t in study.trials:
+            row = {}
+            row.update(t.params)
+            row.update(t.user_attrs)
+            row["value"] = t.value
+            row["number"] = t.number
+            rows.append(row)
+        print(rows)
+        trials_data = rows
+
+
+
         # return
-        return study.best_params, best_attrs
+        return study.best_params, best_attrs, trials_data
     
 
 

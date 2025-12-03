@@ -59,7 +59,7 @@ def main(cfg: DictConfig):
             model_type,
             train_ds=train_ds,
             val_ds=val_ds,
-            epochs=5,
+            epochs=cfg.shared.epochs,
         )
 
     results = trainer.train_best_model(best_params)

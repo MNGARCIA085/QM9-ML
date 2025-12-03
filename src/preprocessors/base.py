@@ -8,6 +8,10 @@ ROOT = Path(__file__).resolve().parents[2]     # project/
 DATA_DIR = ROOT / "data" / "QM9"
 
 
+#https://pytorch-geometric.readthedocs.io/en/2.6.1/generated/torch_geometric.datasets.QM9.html
+
+
+
 
 
 class BasePreprocessor:
@@ -51,9 +55,12 @@ class BasePreprocessor:
 
             if self.subset:
                 # Apply subset slicing
-                dataset = dataset[:self.subset]
+                # dataset = dataset[:self.subset]
+                clean_dataset = dataset[:-1000]   # drop last 1000 (200 later)
+                dataset = clean_dataset[:self.subset]
+
             
-            self._dataset = dataset[-200:] # all except last 200
+            self._dataset = dataset[-1000:] # all except last 1000
             
         return self._dataset
 
@@ -63,7 +70,7 @@ class BasePreprocessor:
         """Load only the test slice (last 200 samples)."""
         if self._test_dataset is None:
             dataset = self.dataset_cls(root=self.root, transform=self.transform)
-            self._test_dataset = dataset[-200:]
+            self._test_dataset = dataset[-1000:]
 
         return self._test_dataset
 

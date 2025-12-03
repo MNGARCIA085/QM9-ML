@@ -44,8 +44,8 @@ class SchNetTuner(BaseTuner):
         # SchNet-specific params
         hidden_channels_opts = kwargs.get("hidden_channels_opts", [32, 64])
         num_filters_opts = kwargs.get("num_filters_opts", [32, 64])
-        num_interactions_low = kwargs.get("lr", {}).get("low", 1)
-        num_interactions_high = kwargs.get("lr", {}).get("high", 5)
+        num_interactions_low = kwargs.get("num_interactions", {}).get("low", 3)
+        num_interactions_high = kwargs.get("num_interactions", {}).get("high", 6)
 
         # General parameters
         batch_size_opts = kwargs.get("batch_size_opts", [16])

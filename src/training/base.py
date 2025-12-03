@@ -80,7 +80,15 @@ class BaseTrainer:
 
         # Rebuild best model (subclasses must implement create_model_from_params)
         model = self.create_model_from_params(best_params)
-        optimizer = torch.optim.Adam(model.parameters(), lr=best_params["lr"])
+
+
+        # maybe than change, to train accoridng the model, wdecya -> schent
+
+        optimizer = torch.optim.Adam(
+            model.parameters(), 
+            lr=best_params["lr"],  
+            weight_decay=1e-6)
+        
         criterion = nn.MSELoss()
 
 
@@ -94,7 +102,7 @@ class BaseTrainer:
         )
 
         # ---- early stopping and model checkpoint  ----
-        early_stop = EarlyStopping(patience=5, mode="min")
+        early_stop = EarlyStopping(patience=30, mode="min")
         ckpt_path = tempfile.mktemp(suffix=".pt") # creates something like /tmp/tmpabcd1234.pt, goal: avoid collisions
         ckpt = ModelCheckpoint(ckpt_path, mode="min") 
 

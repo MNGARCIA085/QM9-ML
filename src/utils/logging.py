@@ -208,7 +208,7 @@ def log_test_results(exp_name, tuning_run_id, model_type, metrics):
 
         # Metrics
         for name, value in metrics.items():
-            mlflow.log_metric(f"val_{name}", value)
+            mlflow.log_metric(f"test_{name}", value)
 
 
 

@@ -9,7 +9,7 @@ class SchNetRegressor(nn.Module):
         num_filters=64,
         num_interactions=3,
         num_gaussians=50,
-        cutoff=10.0,
+        cutoff=5.0,
         readout="add"
     ):
         super().__init__()
@@ -23,9 +23,12 @@ class SchNetRegressor(nn.Module):
             readout=readout
         )
 
-        self.regressor = nn.Identity()  # <--- Important
+        self.regressor = nn.Identity()  # <--- Important, same as nn.Linear(1, 1)?
 
     def forward(self, z, pos, batch):
         return self.schnet(z=z, pos=pos, batch=batch)  # [N,1]
+
+
+
 
 

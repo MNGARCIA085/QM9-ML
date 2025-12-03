@@ -88,10 +88,12 @@ class SchNetTrainer(BaseTrainer):
                 pred = out.squeeze(-1)
                 target = batch.y.squeeze(-1)
 
+
                 loss = criterion(pred, target)
 
                 if train:
                     loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0) # gradient clipping
                     optimizer.step()
 
                 total_loss += loss.item() * batch.num_graphs

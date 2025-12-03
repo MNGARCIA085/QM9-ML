@@ -1,2 +1,1 @@
-epochs: 20
-epochs_trials: 10
+epochs: 10

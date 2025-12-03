@@ -54,3 +54,10 @@ def main(cfg: DictConfig):
 if __name__ == "__main__":
     main()
 
+
+
+# 4000, 40 y 400 da bárbaro (mismo con 200)
+
+# 2000, 40 bte bien!!
+
+# 2000, 40 pretty good

@@ -23,7 +23,8 @@ class SchNetRegressor(nn.Module):
             readout=readout
         )
 
-        self.regressor = nn.Identity()  # <--- Important, same as nn.Linear(1, 1)?
+        self.regressor = nn.Identity()
+        # self.regressor = nn.Linear(1,1 )
 
     def forward(self, z, pos, batch):
         return self.schnet(z=z, pos=pos, batch=batch)  # [N,1]

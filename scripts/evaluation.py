@@ -53,6 +53,10 @@ def main(cfg: DictConfig):
     # evaluate
     metrics = trainer.evaluate(test_ds, model)
 
+    print(len(test_ds))
+
+    print(metrics)
+
     # log best model results
     log_test_results(exp_name, results["run_id"], model_type, metrics)
 

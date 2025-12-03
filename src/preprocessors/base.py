@@ -23,7 +23,7 @@ class BasePreprocessor:
     while keeping a fixed test split for final evaluation.
 
     The dataset is loaded once for training and hyperparameter tuning, where all
-    samples except the last 200 are used. The final 200 molecules of the dataset
+    samples except the last N are used. The final 200 molecules of the dataset
     are reserved as a held-out test set to simulate a real-world evaluation
     scenario. During training/tuning only the training subset is loaded; the test
     subset is loaded separately and only when needed for final evaluation.
@@ -43,6 +43,8 @@ class BasePreprocessor:
         # Initialize internal storage for the dataset
         self._dataset = None
         self._test_dataset = None
+        # to separate for test
+        self.last = 200
 
     # -------------------------
     # Loading dataset (Lazy-loaded)
@@ -53,24 +55,26 @@ class BasePreprocessor:
             # Load the dataset (expensive I/O operation)
             dataset = self.dataset_cls(root=self.root, transform=self.transform)
 
-            if self.subset:
-                # Apply subset slicing
-                # dataset = dataset[:self.subset]
-                clean_dataset = dataset[:-1000]   # drop last 1000 (200 later)
-                dataset = clean_dataset[:self.subset]
+            full = dataset
 
-            
-            self._dataset = dataset[-1000:] # all except last 1000
+            if self.subset:
+                # use subset from the TRAIN part
+                train_part = full[:-self.last]
+                dataset = train_part[:self.subset]
+            else:
+                dataset = full[:-self.last]   # everything except last 
+
+            self._dataset = dataset  # train+val
             
         return self._dataset
 
 
     # alwasy load tiny version
     def _load_test_dataset(self):
-        """Load only the test slice (last 200 samples)."""
+        """Load only the test slice (last samples)."""
         if self._test_dataset is None:
             dataset = self.dataset_cls(root=self.root, transform=self.transform)
-            self._test_dataset = dataset[-1000:]
+            self._test_dataset = dataset[-self.last:]
 
         return self._test_dataset
 

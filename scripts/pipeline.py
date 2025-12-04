@@ -10,14 +10,14 @@ from omegaconf import DictConfig
 def main(cfg: DictConfig):
     # List of preprocessor variants
     val_ratios = ".2"
-    subsets = "12000"
+    subsets = "1000,2000"
 
     # Tuning different models
     model_types = "mlp,gcn,schnet"
 
-    epochs_trials = "5, 8"
+    epochs_trials = "5"
 
-    epochs = "100"
+    epochs = "40"
 
 
 

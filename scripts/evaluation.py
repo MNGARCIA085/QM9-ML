@@ -1,27 +1,15 @@
-import hydra
-from omegaconf import DictConfig, OmegaConf
 from src.preprocessors.registry import PreprocessorRegistry
-from src.preprocessors.mlp import MLPPreprocessor
-from src.preprocessors.gcn import GCNPreprocessor
-from src.preprocessors.schnet import SchNetPreprocessor
 from src.tuning.registry import TuningRegistry
-from src.tuning.mlp import MLPTuner
-from src.tuning.gcn import GCNTuner
-from src.tuning.schnet import SchNetTuner
+from src.training.registry import TrainerRegistry
+
 from src.utils.logging import logging
 
-
-from src.training.registry import TrainerRegistry
-from src.training.mlp import MLPTrainer
-from src.training.gcn import GCNTrainer
-from src.training.schnet import SchNetTrainer
-
-
-
-
 from src.utils.logging import select_best_model, log_test_results
-
 import mlflow
+
+import hydra
+from omegaconf import DictConfig, OmegaConf
+
 
 
 @hydra.main(config_path="../config", config_name="config", version_base=None)

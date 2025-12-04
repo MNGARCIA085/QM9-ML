@@ -1,5 +1,5 @@
-from .base import BasePreprocessor
-from .registry import PreprocessorRegistry
+from src.preprocessors.base import BasePreprocessor
+from src.preprocessors.registry import PreprocessorRegistry
 
 
 

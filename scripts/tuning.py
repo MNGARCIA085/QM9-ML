@@ -1,32 +1,24 @@
-import hydra
-from omegaconf import DictConfig, OmegaConf
 from src.preprocessors.registry import PreprocessorRegistry
-from src.preprocessors.mlp import MLPPreprocessor
-from src.preprocessors.gcn import GCNPreprocessor
-from src.preprocessors.schnet import SchNetPreprocessor
 from src.tuning.registry import TuningRegistry
-from src.tuning.mlp import MLPTuner
-from src.tuning.gcn import GCNTuner
-from src.tuning.schnet import SchNetTuner
+from src.training.registry import TrainerRegistry
+
 from src.utils.logging import logging
 
-
-from src.training.registry import TrainerRegistry
-from src.training.mlp import MLPTrainer
-from src.training.gcn import GCNTrainer
-from src.training.schnet import SchNetTrainer
+# Hydra + OmegaConf
+import hydra
+from omegaconf import DictConfig, OmegaConf
 
 
 
 @hydra.main(config_path="../config", config_name="config", version_base=None)
 def main(cfg: DictConfig):
-
     # get model type (nn, tree.....)
     model_type = cfg.model_type
     print(f"\nSelected model: {model_type}")
 
     cfg_tuning = OmegaConf.load(f"config/tuning/{model_type}.yaml")
 
+    #print("Registry:", PreprocessorRegistry._registry)
 
     # preprocessing
     prep = PreprocessorRegistry.create(

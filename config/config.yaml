@@ -4,7 +4,7 @@ defaults:
   - shared/tuning 
   - preprocessor: preprocessor
   - tuning: mlp
-  #- override hydra/launcher: joblib
+  - override hydra/launcher: joblib
   - _self_
 
 
@@ -12,3 +12,6 @@ defaults:
 random_state: 42
 exp_name: qm9
 run_tuning_name: tuning
+hydra:
+  launcher:
+    n_jobs: 2

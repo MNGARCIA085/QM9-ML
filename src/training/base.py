@@ -69,7 +69,31 @@ class BaseTrainer:
 
 
 
-    # train best model; later make it more general (ex: pass params instead of best params)
+    #-------------------------------------------------------------------------
+
+    # conf. optimizer, I can override it in the subclasses if i need it
+    def configure_optimizer(self, model, params):
+        return torch.optim.Adam(
+            model.parameters(),
+            lr=params["lr"],
+            weight_decay=params.get("weight_decay", 1e-6),
+        )
+
+
+    # subclasses can override it
+    def configure_scheduler(self, optimizer, params):
+        # default scheduler (Plateau)
+        return get_plateau_scheduler(
+            optimizer,
+            mode="min",
+            factor=0.7,
+            patience=2,
+            min_lr=1e-6
+        )
+
+
+
+    # train best model; later make it more general (ex: pass params instead of best params); change later (name)!!!!!!
     def train_best_model(self, best_params):
         """
         Train a fresh model using the best hyperparameters.
@@ -82,24 +106,13 @@ class BaseTrainer:
         model = self.create_model_from_params(best_params)
 
 
-        # maybe than change, to train accoridng the model, wdecya -> schent
-
-        optimizer = torch.optim.Adam(
-            model.parameters(), 
-            lr=best_params["lr"],  
-            weight_decay=1e-6)
-        
+        # can vary depending on the model
+        optimizer = self.configure_optimizer(model, best_params)
         criterion = nn.MSELoss()
 
+        # ---- scheduler----
+        scheduler = self.configure_scheduler(optimizer, best_params)
 
-        # ---- import and use built-in scheduler (clean!) ---- later -> logg this.
-        scheduler = get_plateau_scheduler(
-            optimizer,
-            mode="min",
-            factor=0.7,
-            patience=2,
-            min_lr=1e-6
-        )
 
         # ---- early stopping and model checkpoint  ----
         early_stop = EarlyStopping(patience=30, mode="min")
@@ -126,6 +139,10 @@ class BaseTrainer:
 
             # ---- 1) LR Scheduler ----
             scheduler.step(val_loss)
+            """
+            current_lr = optimizer.param_groups[0]['lr']
+            print(f"LR after scheduler: {current_lr:.6f}")
+            """
 
             # ---- 2) Checkpoint ----
             is_best = ckpt.step(val_loss, model)

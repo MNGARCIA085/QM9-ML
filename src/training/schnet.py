@@ -14,6 +14,17 @@ class SchNetTrainer(BaseTrainer):
     def __init__(self, train_ds=None, val_ds=None, test_ds=None, epochs=10, device=None, **kwargs):
         super().__init__(train_ds, val_ds, test_ds, epochs=epochs, device=device)
 
+
+    # override optimizer
+    def configure_optimizer(self, model, params):
+        return torch.optim.AdamW(
+            model.parameters(),
+            lr=params["lr"],
+            weight_decay=params.get("weight_decay", 1e-5),
+        )
+
+
+
     # ---------------------------------------------------------
     # Predictions
     # ---------------------------------------------------------

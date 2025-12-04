@@ -1,6 +1,6 @@
 from torch_geometric.transforms import RadiusGraph
 from src.preprocessors.base import BasePreprocessor
-from .registry import PreprocessorRegistry
+from src.preprocessors.registry import PreprocessorRegistry
 
 
 @PreprocessorRegistry.register("gcn")

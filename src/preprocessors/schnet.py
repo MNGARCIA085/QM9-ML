@@ -1,4 +1,4 @@
-from .registry import PreprocessorRegistry
+from src.preprocessors.registry import PreprocessorRegistry
 from src.preprocessors.base import BasePreprocessor
 
 @PreprocessorRegistry.register("schnet")

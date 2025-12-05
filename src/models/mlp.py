@@ -11,6 +11,7 @@ class SimpleMLP(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden, 1)
         )
+    
     def forward(self, batch):
         x = self.emb(batch.z)
         x = global_mean_pool(x, batch.batch)

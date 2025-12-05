@@ -13,3 +13,8 @@ class TuningRegistry:
         if name not in cls._registry:
             raise ValueError(f"Unknown tuner: {name}")
         return cls._registry[name](**kwargs)
+
+
+    @classmethod
+    def get(cls, name):
+        return cls._registry.get(name, None)

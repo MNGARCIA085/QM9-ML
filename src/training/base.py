@@ -24,6 +24,8 @@ class BaseTrainer:
         self.test_ds = test_ds
         self.epochs = epochs  
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.current_epoch = 0
+        self.patience = 30 # for early stopping
 
 
 
@@ -83,39 +85,44 @@ class BaseTrainer:
     # subclasses can override it
     def configure_scheduler(self, optimizer, params):
         # default scheduler (Plateau)
+        print(params)
         return get_plateau_scheduler(
             optimizer,
             mode="min",
-            factor=0.7,
-            patience=2,
-            min_lr=1e-6
+            factor = params.get("factor", 0.7),
+            patience = params.get("patience", 2),
+            min_lr = params.get("min_lr", 1e-6)
         )
 
 
 
-    # train best model; later make it more general (ex: pass params instead of best params); change later (name)!!!!!!
-    def train_best_model(self, best_params):
+    # train
+    def train(self, params):
+
+
+        # params: schnet ex:{'batch_size': 16, 'lr': .., 'hidden_channels': 256, 'num_filters': 128, 'num_interactions': 4}
+
         """
         Train a fresh model using the best hyperparameters.
         """
 
         # Loaders
-        train_loader, val_loader = self.create_loaders(best_params["batch_size"])
+        train_loader, val_loader = self.create_loaders(params["batch_size"])
 
         # Rebuild best model (subclasses must implement create_model_from_params)
-        model = self.create_model_from_params(best_params)
+        model = self.create_model_from_params(params)
 
 
         # can vary depending on the model
-        optimizer = self.configure_optimizer(model, best_params)
+        optimizer = self.configure_optimizer(model, params)
         criterion = nn.MSELoss()
 
         # ---- scheduler----
-        scheduler = self.configure_scheduler(optimizer, best_params)
+        scheduler = self.configure_scheduler(optimizer, params)
 
 
         # ---- early stopping and model checkpoint  ----
-        early_stop = EarlyStopping(patience=30, mode="min")
+        early_stop = EarlyStopping(patience=self.patience, mode="min")
         ckpt_path = tempfile.mktemp(suffix=".pt") # creates something like /tmp/tmpabcd1234.pt, goal: avoid collisions
         ckpt = ModelCheckpoint(ckpt_path, mode="min") 
 
@@ -125,6 +132,10 @@ class BaseTrainer:
 
 
         for epoch in range(self.epochs):
+
+            # store epoch (useful for ex. to know which was my best epoch)
+            self.current_epoch = epoch
+
             train_loss = self.run_epoch(True, train_loader, model, criterion, optimizer)
             val_loss = self.run_epoch(False, val_loader, model, criterion)
 
@@ -177,14 +188,12 @@ class BaseTrainer:
                         {
                             "losses": train_losses,
                             "metrics": train_metrics,
-                            "loss": train_loss,
                         },
                     "val":{
                         "losses": val_losses,
                         "metrics": val_metrics,
-                        "loss": val_loss, # maybe redundant, is MSE
                     },
-                    "hyperparams": best_params,
+                    "hyperparams": params,
                 }
             )
 
@@ -192,4 +201,3 @@ class BaseTrainer:
     
 
 # https://chatgpt.com/c/6930c0c8-5764-8329-96d5-72f43a5b31d4
-

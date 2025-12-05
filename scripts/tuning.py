@@ -29,6 +29,13 @@ def main(cfg: DictConfig):
     )
     train_ds, val_ds = prep.preprocess()
 
+    print(type(train_ds))
+
+    for x in train_ds:
+        print(x)
+        break
+
+
     artifacts = prep.get_artifacts() # for later logging
 
     # tuning
@@ -54,7 +61,7 @@ def main(cfg: DictConfig):
             epochs=cfg.shared.epochs,
         )
 
-    results = trainer.train_best_model(best_params)
+    results = trainer.train(best_params)
 
     # logging
     logging(cfg.exp_name, cfg.run_tuning_name, artifacts, results, model_type, trials_data)

@@ -103,3 +103,28 @@ def test_schnet_tuner_full_trial():
 
     assert isinstance(trial.value, float)
     assert "metrics" in trial.user_attrs
+
+
+
+"""
+def test_schnet_tuner_runs(prep_small):
+    train_ds, val_ds = prep_small.preprocess()
+
+    tuner = SchNetTuner(train_ds, val_ds, epochs_trials=1, device="cpu")
+
+    # Small search space so it runs fast
+    params, attrs, trials = tuner.tune(
+        n_trials=1,
+        hidden_channels_opts=[16],
+        num_filters_opts=[16],
+        num_interactions={"low": 2, "high": 2},
+        batch_size_opts=[8],
+        lr={"low": 1e-4, "high": 1e-3}
+    )
+
+    assert isinstance(params, dict)
+    assert isinstance(attrs, dict)
+    assert isinstance(trials, list)
+    assert "lr" in params
+    assert len(trials) == 1
+"""

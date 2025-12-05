@@ -85,7 +85,6 @@ class BaseTrainer:
     # subclasses can override it
     def configure_scheduler(self, optimizer, params):
         # default scheduler (Plateau)
-        print(params)
         return get_plateau_scheduler(
             optimizer,
             mode="min",

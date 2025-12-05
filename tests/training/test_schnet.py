@@ -201,3 +201,33 @@ Because we construct synthetic, valid SchNet data instead of depending on your f
 
 
 
+"""
+def test_trainer_single_epoch(trainer):
+    train_loader, val_loader = trainer.create_loaders(batch_size=8)
+
+    model = SchNetRegressor().to("cpu")
+    optimizer = Adam(model.parameters(), lr=1e-3)
+    criterion = nn.MSELoss()
+
+    # Run one training epoch
+    loss = trainer.run_epoch(True, train_loader, model, criterion, optimizer)
+    assert torch.isfinite(torch.tensor(loss))
+
+
+def test_trainer_evaluate(trainer):
+    train_loader, val_loader = trainer.create_loaders(batch_size=8)
+
+    model = SchNetRegressor().to("cpu")
+    optimizer = Adam(model.parameters(), lr=1e-3)
+    criterion = nn.MSELoss()
+
+    # One epoch so model is not totally random
+    trainer.run_epoch(True, train_loader, model, criterion, optimizer)
+
+    metrics = trainer.evaluate(val_loader, model)
+
+    assert isinstance(metrics, dict)
+    assert "mse" in metrics or "loss" in metrics
+    for k, v in metrics.items():
+        assert torch.isfinite(torch.tensor(v))
+"""

@@ -80,6 +80,17 @@ class DummyDataset:
                 name="mol2",
                 idx=torch.tensor([1])
             ),
+            Data(
+                x=torch.randn(7, 11),
+                edge_index=torch.tensor([[0,1,2,3],[1,2,3,4]]),
+                edge_attr=torch.randn(4, 4),
+                y=torch.randn(1, 19),
+                pos=torch.randn(7, 3),
+                z=torch.randint(1, 10, (7,)),
+                smiles="CO2",
+                name="mol2",
+                idx=torch.tensor([1])
+            ),
         ]
 
     def __len__(self):

@@ -3,7 +3,7 @@ from src.preprocessors.mlp import MLPPreprocessor
 from tests.conftest import DummyDataset
 
 def test_format_dataset_mlp(tmp_path):
-    prep = MLPPreprocessor(dataset_cls=DummyDataset, root=tmp_path)
+    prep = MLPPreprocessor(dataset_cls=DummyDataset, root=tmp_path, last=0)
 
     dataset = prep._load_dataset()
     processed = prep._format_dataset(dataset, is_inference=False)
@@ -19,7 +19,7 @@ def test_format_dataset_mlp(tmp_path):
 
 
 def test_mlp_inference_removes_targets(tmp_path):
-    prep = MLPPreprocessor(dataset_cls=DummyDataset, root=tmp_path)
+    prep = MLPPreprocessor(dataset_cls=DummyDataset, root=tmp_path, last=0)
     
     dataset = prep._load_dataset()
     processed = prep._format_dataset(dataset, is_inference=True)

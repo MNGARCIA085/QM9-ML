@@ -23,7 +23,7 @@ class BasePreprocessor:
     while keeping a fixed test split for final evaluation.
 
     The dataset is loaded once for training and hyperparameter tuning, where all
-    samples except the last N are used. The final 200 molecules of the dataset
+    samples except the last N are used. The final "last" (200 by default) molecules of the dataset
     are reserved as a held-out test set to simulate a real-world evaluation
     scenario. During training/tuning only the training subset is loaded; the test
     subset is loaded separately and only when needed for final evaluation.
@@ -31,7 +31,7 @@ class BasePreprocessor:
     """
     def __init__(self, dataset_cls=QM9, root=DATA_DIR,
                  transform=None, target=0, val_ratio=0.2,
-                 seed=42, subset=None):
+                 seed=42, last=200, subset=None):
 
         self.dataset_cls = dataset_cls
         self.root = root
@@ -44,28 +44,26 @@ class BasePreprocessor:
         self._dataset = None
         self._test_dataset = None
         # to separate for test
-        self.last = 200
+        self.last = last
 
     # -------------------------
     # Loading dataset (Lazy-loaded)
     # -------------------------
-    def _load_dataset(self): # ok but memory intensive
-        """Loads the dataset once and caches it."""
-        if self._dataset is None:
-            # Load the dataset (expensive I/O operation)
-            dataset = self.dataset_cls(root=self.root, transform=self.transform)
 
+
+    def _load_dataset(self):
+        if self._dataset is None:
+            dataset = self.dataset_cls(root=self.root, transform=self.transform)
             full = dataset
 
             if self.subset:
-                # use subset from the TRAIN part
-                train_part = full[:-self.last]
+                train_part = full[:-self.last] if self.last > 0 else full
                 dataset = train_part[:self.subset]
             else:
-                dataset = full[:-self.last]   # everything except last 
+                dataset = full if self.last == 0 else full[:-self.last]
 
-            self._dataset = dataset  # train+val
-            
+            self._dataset = dataset
+
         return self._dataset
 
 

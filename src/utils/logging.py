@@ -47,7 +47,7 @@ def logging(exp_name, run_name, artifacts, results, model_type, trials_data):
             mlflow.log_metric(f"val_{name}", value)
 
         # Model (is always a torch model)        
-        mlflow.pytorch.log_model(results["model"], name="model") # artifact_path
+        mlflow.pytorch.log_model(results["model"], name="model")
         
         # training curves
         loss_path = plot_losses(results["train"]["losses"], results["val"]["losses"], "loss_curve.png", 'Loss')
@@ -191,7 +191,7 @@ insteado of order_by
 
 
 # log test results
-def log_test_results(exp_name, tuning_run_id, model_type, metrics):
+def log_test_results(exp_name, tuning_run_id, model_type, metrics, hparams):
 
     # ensures artifact path is set
     mlflow.set_experiment(exp_name)
@@ -209,6 +209,9 @@ def log_test_results(exp_name, tuning_run_id, model_type, metrics):
         # Metrics
         for name, value in metrics.items():
             mlflow.log_metric(f"test_{name}", value)
+
+        # HParams
+        mlflow.log_params(hparams)
 
 
 

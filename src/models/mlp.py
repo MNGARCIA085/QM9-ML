@@ -11,6 +11,12 @@ class SimpleMLP(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden, 1)
         )
+
+        # Store hyperparameters for MLflow + API reproducibility
+        self.config = dict(
+            hidden=hidden,
+            num_atom_types=num_atom_types,
+        )
     
     def forward(self, batch):
         x = self.emb(batch.z)

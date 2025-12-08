@@ -14,6 +14,17 @@ class SchNetRegressor(nn.Module):
     ):
         super().__init__()
 
+        
+        # Store hyperparameters for MLflow + API reproducibility
+        self.config = dict(
+            hidden_channels=hidden_channels,
+            num_filters=num_filters,
+            num_interactions=num_interactions,
+            num_gaussians=num_gaussians,
+            cutoff=cutoff,
+            readout=readout
+        )
+
         self.schnet = SchNet(
             hidden_channels=hidden_channels,
             num_filters=num_filters,

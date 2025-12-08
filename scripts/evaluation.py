@@ -45,8 +45,9 @@ def main(cfg: DictConfig):
 
     print(metrics)
 
+
     # log best model results
-    log_test_results(exp_name, results["run_id"], model_type, metrics)
+    log_test_results(exp_name, results["run_id"], model_type, metrics, model.config)
 
 
     

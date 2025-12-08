@@ -10,6 +10,13 @@ class SimpleGCN(nn.Module):
         self.conv2 = GCNConv(hidden, hidden)
         self.fc = nn.Linear(hidden, 1)
 
+        # Store hyperparameters for MLflow + API reproducibility
+        self.config = dict(
+            hidden=hidden,
+            num_atom_types=num_atom_types,
+        )
+
+
     def forward(self, batch):
         x = self.emb(batch.z)           # [num_nodes, hidden]
         x = self.conv1(x, batch.edge_index) # using edge_index here!!!!!!!!!!!!!!!!!!!!

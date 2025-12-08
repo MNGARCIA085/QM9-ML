@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+
+torch==2.4.1
+torch-geometric==2.5.3
+
+
+
+rdkit-pypi
+mlflow
+numpy

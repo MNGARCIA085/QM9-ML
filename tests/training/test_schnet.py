@@ -128,7 +128,7 @@ def test_schnet_train_best_model_runs():
     assert "metrics" in result["val"]
 
     # hyperparams returned
-    assert result["hyperparams"] == params
+    assert "epochs" in result["hyperparams"]
 
 
 

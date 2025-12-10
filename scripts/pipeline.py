@@ -61,3 +61,8 @@ if __name__ == "__main__":
 # 2000, 40 bte bien!!
 
 # 2000, 40 pretty good
+
+
+# 4000 y 50 bte bien
+
+#6000, 50 y 400 buena comb.

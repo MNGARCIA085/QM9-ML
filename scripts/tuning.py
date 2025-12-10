@@ -73,6 +73,11 @@ def main(cfg: DictConfig):
 
 
 
+
+
+
+    """
+
     # save best model to the appropiate folder (for the API); simulate a registry
     from src.utils.logging import select_best_model
     from pathlib import Path
@@ -96,8 +101,9 @@ def main(cfg: DictConfig):
     save_path = PATH / "model.pt"
     torch.save(model.state_dict(), save_path) # only weights
 
-
     print("Model saved to:", save_path)
+
+    """
 
 
     # save_model_for_api

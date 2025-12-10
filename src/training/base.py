@@ -96,10 +96,11 @@ class BaseTrainer:
 
 
     # train
-    def train(self, params):
+    def train(self, params): # params are tuning_params!!!!!!
 
 
         # params: schnet ex:{'batch_size': 16, 'lr': .., 'hidden_channels': 256, 'num_filters': 128, 'num_interactions': 4}
+        # those the ones I use for tuning, but i also have some fixed (limited resources) like cutoff
 
         """
         Train a fresh model using the best hyperparameters.
@@ -129,6 +130,9 @@ class BaseTrainer:
         train_losses = []
         val_losses = []
 
+        final_epoch = 0          # default, will update
+        final_lr = None
+
 
         for epoch in range(self.epochs):
 
@@ -149,6 +153,7 @@ class BaseTrainer:
 
             # ---- 1) LR Scheduler ----
             scheduler.step(val_loss)
+            final_lr = optimizer.param_groups[0]["lr"]  # always update
             """
             current_lr = optimizer.param_groups[0]['lr']
             print(f"LR after scheduler: {current_lr:.6f}")
@@ -164,7 +169,10 @@ class BaseTrainer:
             early_stop.step(val_loss)
             if early_stop.stop_training:
                 print("Early stopping triggered!")
+                final_epoch = epoch + 1  # human-readable
                 break
+
+            final_epoch = epoch + 1  # update each loop
 
 
 
@@ -177,6 +185,18 @@ class BaseTrainer:
         # ---- compute additional metrics (for train and val; final metrics) ----
         train_metrics = self.evaluate(train_loader, model)
         val_metrics = self.evaluate(val_loader, model)
+
+        # all hyperparams
+        hyperparams = {
+            **model.config,     # unpack existing config
+            "epochs": self.epochs,
+            "final_epochs": final_epoch,
+            "final_lr": final_lr,
+            "lr": params["lr"],
+            "batch_size": params["batch_size"],
+        }
+
+
 
 
         # --- Return results ---
@@ -192,7 +212,7 @@ class BaseTrainer:
                         "losses": val_losses,
                         "metrics": val_metrics,
                     },
-                    "hyperparams": params,
+                    "hyperparams": hyperparams,
                 }
             )
 

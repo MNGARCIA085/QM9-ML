@@ -31,7 +31,7 @@ class BasePreprocessor:
     """
     def __init__(self, dataset_cls=QM9, root=DATA_DIR,
                  transform=None, target=0, val_ratio=0.2,
-                 seed=42, last=200, subset=None):
+                 seed=42, last=400, subset=None): # 200. 400 for last
 
         self.dataset_cls = dataset_cls
         self.root = root

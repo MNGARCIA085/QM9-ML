@@ -21,6 +21,8 @@ os.makedirs(artifact_dir, exist_ok=True)
 
 
 
+# later -> add epochs........
+
 
 # logging (for the tuning exps)
 def logging(exp_name, run_name, artifacts, results, model_type, trials_data):
@@ -47,7 +49,15 @@ def logging(exp_name, run_name, artifacts, results, model_type, trials_data):
             mlflow.log_metric(f"val_{name}", value)
 
         # Model (is always a torch model)        
-        mlflow.pytorch.log_model(results["model"], name="model")
+        #mlflow.pytorch.log_model(results["model"], name="model")
+
+        mlflow.pytorch.log_model(results["model"], 
+                                 code_paths=["src"], # -> added
+                                 #registered_model_name="qm9_model", to be cleaner later
+                                 name="model")
+
+        
+
         
         # training curves
         loss_path = plot_losses(results["train"]["losses"], results["val"]["losses"], "loss_curve.png", 'Loss')
@@ -65,57 +75,6 @@ def logging(exp_name, run_name, artifacts, results, model_type, trials_data):
         mlflow.log_artifact(path)
         os.remove(path)
         
-
-
-
-"""
-
-https://chatgpt.com/c/692e2037-86d0-8330-96dc-c7d7ba943843
-
-from hydra.core.hydra_config import HydraConfig
-
-run_dir = HydraConfig.get().run.dir
-path = f"{run_dir}/optuna_trials.csv"
-df.to_csv(path, index=False)
-mlflow.log_artifact(path)
-os.remove(path)
-
-"""
-
-
-"""
--------------------------------------
-Saving
-
-
-
-
-
-
-
----------------------------------------
-Loading
-
-import mlflow
-
-client = mlflow.tracking.MlflowClient()
-run_id = "<run_id>"
-
-# list artifacts in the "optuna" folder
-artifacts = client.list_artifacts(run_id, path="optuna")
-for a in artifacts:
-    print(a.path)
-
-
-
-local_path = client.download_artifacts(run_id, artifacts[0].path)
-
-with open(local_path) as f:
-    data = json.load(f)
-
-"""
-
-
 
 
 

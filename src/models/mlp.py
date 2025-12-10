@@ -5,6 +5,7 @@ from torch_geometric.nn import global_mean_pool
 class SimpleMLP(nn.Module):
     def __init__(self, num_atom_types=100, hidden=64):
         super().__init__()
+        
         self.emb = nn.Embedding(num_atom_types, hidden)
         self.fc = nn.Sequential(
             nn.Linear(hidden, hidden),

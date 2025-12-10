@@ -45,8 +45,8 @@ class BaseTuner:
         self.best_params = study.best_params
         self.best_attrs  = best_attrs   # metrics / extras (right now i just for my best trial for a few epochs)
 
-        # test
         
+        # trial data
         rows = []
         for t in study.trials:
             row = {}

@@ -1,9 +1,17 @@
 import torch
 from torch.utils.data import random_split
-from pathlib import Path
 from torch_geometric.datasets import QM9
+from pathlib import Path
 
-DEFAULT_DATA_ROOT = Path.home() / ".cache" / "pyg_datasets" / "qm9"
+
+ROOT = Path(__file__).resolve().parents[2]     # project/
+DATA_DIR = ROOT / "data" / "QM9"
+
+
+#https://pytorch-geometric.readthedocs.io/en/2.6.1/generated/torch_geometric.datasets.QM9.html
+
+
+
 
 
 class BasePreprocessor:
@@ -21,48 +29,33 @@ class BasePreprocessor:
     subset is loaded separately and only when needed for final evaluation.
 
     """
-    def __init__(
-        self,
-        dataset_cls=QM9,
-        root=None,
-        transform=None,
-        target=0,
-        val_ratio=0.2,
-        seed=42,
-        last=400,
-        subset=None,
-    ):
-        # Decide root directory
-        if root is not None:
-            self.root = Path(root)
-        else:
-            self.root = DEFAULT_DATA_ROOT
-
-        # Ensure parent dir exists
-        self.root.mkdir(parents=True, exist_ok=True)
+    def __init__(self, dataset_cls=QM9, root=DATA_DIR,
+                 transform=None, target=0, val_ratio=0.2,
+                 seed=42, last=400, subset=None): # 200. 400 for last
 
         self.dataset_cls = dataset_cls
+        self.root = root
         self.transform = transform
         self.target = target
         self.val_ratio = val_ratio
         self.seed = seed
         self.subset = subset
-        self.last = last
-
+        # Initialize internal storage for the dataset
         self._dataset = None
         self._test_dataset = None
+        # to separate for test
+        self.last = last
+
+    # -------------------------
+    # Loading dataset (Lazy-loaded)
+    # -------------------------
 
 
     def _load_dataset(self):
-        """Load train/val subset (auto-download if needed)."""
         if self._dataset is None:
-            # Always load the full QM9 first (downloads if missing)
-            full = self.dataset_cls(
-                root=str(self.root),
-                transform=self.transform,
-            )
+            dataset = self.dataset_cls(root=self.root, transform=self.transform)
+            full = dataset
 
-            # === Your original logic preserved ===
             if self.subset:
                 train_part = full[:-self.last] if self.last > 0 else full
                 dataset = train_part[:self.subset]
@@ -74,14 +67,12 @@ class BasePreprocessor:
         return self._dataset
 
 
+    # alwasy load tiny version
     def _load_test_dataset(self):
         """Load only the test slice (last samples)."""
         if self._test_dataset is None:
-            full = self.dataset_cls(
-                root=str(self.root),
-                transform=self.transform,
-            )
-            self._test_dataset = full[-self.last:]
+            dataset = self.dataset_cls(root=self.root, transform=self.transform)
+            self._test_dataset = dataset[-self.last:]
 
         return self._test_dataset
 

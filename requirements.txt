@@ -17,4 +17,8 @@ torch_scatter
 torch_sparse
 -f https://data.pyg.org/whl/torch-2.8.0+cpu.html
 
-# needs joblib for hydra, is not bulletproof
+# for hydra
+hydra-core
+joblib
+hydra-joblib-launcher
+

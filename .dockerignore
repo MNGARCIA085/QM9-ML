@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# virtual envs
+.env/
+.venv/
+venv/
+
+# data
+data/
+datasets/
+*.csv
+*.npz
+*.pt
+*.pth
+*.ckpt
+
+# notebooks junk
+.ipynb_checkpoints/
+
+# build artifacts
+dist/
+build/
+*.egg-info/
+
+# ML frameworks
+mlruns/
+wandb/
+checkpoints/
+outputs/
+multirun/
+
+# system
+.DS_Store

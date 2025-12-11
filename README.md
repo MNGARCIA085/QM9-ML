@@ -47,13 +47,13 @@ pytest
 #### 1. Build the container
 
 ```bash
-docker build -f Dockerfile -t ml_env:latest .
+docker build -f Dockerfile -t ml_qm9:latest .
 ```
 
 #### 2. Run the container
 
 ```bash
-docker run -it -v $(pwd)/mlruns:/app/mlruns ml_env:latest 
+docker run -it ml_qm9:latest
 ```
 
 
@@ -63,18 +63,22 @@ You can execute any module in the scripts/ directory directly and override param
 
 
 ```bash
-python -m scripts.tuning model_type=schnet shared.epochs=5
+python -m scripts.tuning model_type=schnet shared.epochs=50
+python -m scripts.tuning model_type=gcn preprocessor.val_ratio=0.1 shared.num_trials=10
+python -m scripts.evaluation
 ```
 
 
 ### Citation
 
 Dataset:
+
 Ramakrishnan, R., Dral, P. O., Rupp, M., & von Lilienfeld, O. A. (2014).
 Quantum chemistry structures and properties of 134 kilo molecules.
 Scientific Data, 1, 140022.
 
 PyTorch Geometric dataset loader:
+
 Fey, M., & Lenssen, J. E. (2019).
 Fast Graph Representation Learning with PyTorch Geometric.
 arXiv:1903.02428.

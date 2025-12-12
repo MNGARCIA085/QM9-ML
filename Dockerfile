@@ -1,23 +1,50 @@
-FROM python:3.10-slim
+##############################
+# STAGE 1 — Builder
+##############################
+FROM python:3.10-slim AS builder
 
-# ===== System dependencies for PyTorch Geometric + RDKit =====
+# System deps for PyG CPU + building wheels
 RUN apt-get update && apt-get install -y \
     build-essential \
+    git \
+    curl \
+    libffi-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /build
 
 COPY requirements.txt .
 
-# Install base Python deps
-RUN pip install -r requirements.txt
+# Install ALL dependencies here (heavy layer)
+RUN pip install --no-cache-dir -r requirements.txt
 
 
-COPY config/ config
-COPY tests/ tests
+##############################
+# STAGE 2 — Final Runtime
+##############################
+FROM python:3.10-slim AS runtime
+
+WORKDIR /app
+#RUN adduser --system --no-create-home appuser
+#USER appuser
+
+# Copy only installed packages from builder
+COPY --from=builder /usr/local/lib/python3.10/site-packages \
+                    /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin \
+                    /usr/local/bin
+
+##############################
+# Project files (small)
+##############################
+COPY config/ config/
+COPY tests/ tests/
 COPY src/ src/
 COPY scripts/ scripts/
 
+# IMPORTANT: data is NOT copied — mount it when running
+# docker run -v /mydata/qm9:/data ...
 
 EXPOSE 8000
 
@@ -25,15 +52,6 @@ CMD ["bash"]
 
 
 
+
 # docker build -f Dockerfile -t ml_qm9:latest .
 # docker run -it ml_qm9:latest
-
-
-
-# Install PyTorch Geometric ops (CPU wheels for PyTorch 2.4.x)
-#RUN pip install \
-#    torch_cluster \
-#    torch_scatter==2.1.2+pt28cpu \
-#    torch_sparse==0.6.18+pt28cpu \
-#    torch_spline_conv==1.2.2+pt28cpu \
-#    -f https://data.pyg.org/whl/torch-2.4.0+cpu.html

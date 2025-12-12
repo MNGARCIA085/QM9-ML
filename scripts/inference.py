@@ -49,16 +49,3 @@ def main(cfg: DictConfig):
 if __name__ == "__main__":
     main()
 
-
-
-
-"""
-python -m src.scripts.tuning
-python -m src.scripts.tuning model_type=tree
-python -m src.scripts.tuning -m model_type=nn,tree
-"""
-
-
-
-
-

@@ -21,7 +21,7 @@ def tiny_cfg():
             "shared": {
                 "epochs": 1,
                 "epochs_trials": 1,
-                "num_trials": 1,
+                "num_trials": 2,
             },
 
             "exp_name": "test-exp",
@@ -83,7 +83,7 @@ def test_full_pipeline_integration(tiny_cfg, tiny_tuning_cfg):
         epochs_trials=tiny_cfg.shared.epochs_trials,
     )
 
-    best_params, attrs, trials_data = tuner.tune(
+    best_params, attrs, trials_data, importances = tuner.tune(
         n_trials=tiny_cfg.shared.num_trials,
         **tiny_tuning_cfg
     )

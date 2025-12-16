@@ -25,7 +25,7 @@ os.makedirs(artifact_dir, exist_ok=True)
 
 
 # logging (for the tuning exps)
-def logging(exp_name, run_name, artifacts, results, model_type, trials_data):
+def logging(exp_name, run_name, artifacts, results, model_type, trials_data, importances=None):
 
     # ensures artifact path is set
     mlflow.set_experiment(exp_name)
@@ -74,7 +74,16 @@ def logging(exp_name, run_name, artifacts, results, model_type, trials_data):
         df.to_json(path, orient="records", indent=2)
         mlflow.log_artifact(path)
         os.remove(path)
-        
+
+        # Log hyperparameter importances
+        import json
+        if importances is not None:
+            path = f"optuna_importances_{uuid.uuid4().hex}.json"
+            with open(path, "w") as f:
+                json.dump(importances, f, indent=2)
+            mlflow.log_artifact(path)
+            os.remove(path)
+
 
 
 

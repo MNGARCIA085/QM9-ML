@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import optuna
-
+from optuna.importance import get_param_importances
 
 
 class BaseTuner:
@@ -55,14 +55,15 @@ class BaseTuner:
             row["value"] = t.value
             row["number"] = t.number
             rows.append(row)
-        print(rows)
         trials_data = rows
+
+        # hyperparameter importances
+        importances = get_param_importances(study)
 
 
 
         # return
-        return study.best_params, best_attrs, trials_data
-    
+        return study.best_params, best_attrs, trials_data, importances
 
 
 

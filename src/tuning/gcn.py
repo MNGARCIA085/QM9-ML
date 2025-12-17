@@ -31,6 +31,7 @@ class GCNTuner(BaseTuner):
     # see later if its not common to all classes
     def objective(self, trial, **kwargs):
 
+
         # specific params
         batch_size_opts = kwargs.get('batch_size_opts', [16, 32])
         hidden_opts  = kwargs.get('hidden_opts', [32, 64, 128])

@@ -15,10 +15,10 @@ class BasePreprocessor:
     while keeping a fixed test split for final evaluation.
 
     The dataset is loaded once for training and hyperparameter tuning, where all
-    samples except the last N are used. The final "last" (200 by default) molecules of the dataset
-    are reserved as a held-out test set to simulate a real-world evaluation
-    scenario. During training/tuning only the training subset is loaded; the test
-    subset is loaded separately and only when needed for final evaluation.
+    samples except the last N are used. A fixed, reproducible test set is created 
+    by reserving the last N samples after shuffling.  During training/tuning only 
+    the training subset is loaded; the test subset is loaded separately and only 
+    when needed for final evaluation.
 
     """
     def __init__(
@@ -45,46 +45,61 @@ class BasePreprocessor:
         self.transform = transform
         self.target = target
         self.val_ratio = val_ratio
-        self.seed = seed
+        self.seed = 42 # hardcoded for safety (always get the same test set)
         self.subset = subset
-        self.last = last
+        self.last = 400 # hardcoded for safety
 
         self._dataset = None
         self._test_dataset = None
 
 
     def _load_dataset(self):
-        """Load train/val subset (auto-download if needed)."""
+        """Load train/val dataset with fixed, reproducible split."""
         if self._dataset is None:
-            # Always load the full QM9 first (downloads if missing)
             full = self.dataset_cls(
                 root=str(self.root),
                 transform=self.transform,
             )
 
-            # === Your original logic preserved ===
-            if self.subset:
-                train_part = full[:-self.last] if self.last > 0 else full
-                dataset = train_part[:self.subset]
-            else:
-                dataset = full if self.last == 0 else full[:-self.last]
+            if self.last > 0:
+                # this always give the same; same dataset, order, seed
+                gen = torch.Generator().manual_seed(self.seed)
+                perm = torch.randperm(len(full), generator=gen)
+                full = full[perm]
 
-            self._dataset = dataset
+                train_part = full[:-self.last]
+            else:
+                train_part = full
+
+            # Optional subset for fast experiments
+            if self.subset:
+                train_part = train_part[:self.subset]
+
+            self._dataset = train_part
 
         return self._dataset
 
 
+
     def _load_test_dataset(self):
-        """Load only the test slice (last samples)."""
+        """Load fixed test dataset."""
         if self._test_dataset is None:
             full = self.dataset_cls(
                 root=str(self.root),
                 transform=self.transform,
             )
+
+            if self.last == 0:
+                raise ValueError("last must be > 0 to create a test set")
+
+            # always returns a fixed holdout set
+            gen = torch.Generator().manual_seed(self.seed)
+            perm = torch.randperm(len(full), generator=gen)
+            full = full[perm]
+
             self._test_dataset = full[-self.last:]
 
         return self._test_dataset
-
     
     # -------------------------
     # Split train/val
@@ -107,7 +122,7 @@ class BasePreprocessor:
         Must be implemented by subclasses.
           For MLP: extract z, and a column of y
           For GCN: extract z, pos, edge_index, y
-          For SchNet: extract all fields ------------> nop, correct
+          For SchNet: ....
         """
         raise NotImplementedError
 

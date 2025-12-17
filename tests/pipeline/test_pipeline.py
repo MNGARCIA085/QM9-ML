@@ -120,29 +120,3 @@ def test_full_pipeline_integration(tiny_cfg, tiny_tuning_cfg):
 
 
 
-"""
-def test_full_pipeline_integration(prep_small):
-    # preprocess
-    train_ds, val_ds = prep_small.preprocess()
-    test_ds = prep_small.preprocess_test()
-
-    trainer = SchNetTrainer(train_ds, val_ds, device="cpu")
-    train_loader, val_loader = trainer.create_loaders(batch_size=8)
-
-    model = SchNetRegressor().to("cpu")
-    optimizer = Adam(model.parameters(), lr=1e-3)
-    criterion = nn.MSELoss()
-
-    # Train 2 epochs (fast)
-    for _ in range(2):
-        trainer.run_epoch(True, train_loader, model, criterion, optimizer)
-        trainer.run_epoch(False, val_loader, model, criterion)
-
-    # Final test evaluation
-    #test_loader = trainer.make_loader(test_ds, batch_size=8); not needed
-    test_metrics = trainer.evaluate(test_ds, model)
-
-    assert isinstance(test_metrics, dict)
-    for v in test_metrics.values():
-        assert torch.isfinite(torch.tensor(v))
-"""

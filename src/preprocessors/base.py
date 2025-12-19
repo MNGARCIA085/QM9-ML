@@ -47,7 +47,7 @@ class BasePreprocessor:
         self.val_ratio = val_ratio
         self.seed = 42 # hardcoded for safety (always get the same test set)
         self.subset = subset
-        self.last = 400 # hardcoded for safety
+        self.last = last # hardcoded for safety later, but adapt tests and all thats needed
 
         self._dataset = None
         self._test_dataset = None
@@ -64,10 +64,22 @@ class BasePreprocessor:
             if self.last > 0:
                 # this always give the same; same dataset, order, seed
                 gen = torch.Generator().manual_seed(self.seed)
+                
+                """
                 perm = torch.randperm(len(full), generator=gen)
                 full = full[perm]
-
                 train_part = full[:-self.last]
+                """
+
+
+                perm = torch.randperm(len(full), generator=gen).tolist()
+                if self.last > 0:
+                    train_indices = perm[:-self.last]
+                else:
+                    train_indices = perm
+                train_part = torch.utils.data.Subset(full, train_indices)
+
+
             else:
                 train_part = full
 
@@ -94,10 +106,16 @@ class BasePreprocessor:
 
             # always returns a fixed holdout set
             gen = torch.Generator().manual_seed(self.seed)
+            
+            """
             perm = torch.randperm(len(full), generator=gen)
             full = full[perm]
-
             self._test_dataset = full[-self.last:]
+            """
+            perm = torch.randperm(len(full), generator=gen).tolist()
+            test_indices = perm[-self.last:]
+            self._test_dataset = torch.utils.data.Subset(full, test_indices)
+
 
         return self._test_dataset
     

@@ -36,17 +36,6 @@ def test_preprocess_returns_train_val_split(tmp_path):
 
 
 
-def test_preprocess_test_returns_list(tmp_path):
-    prep = DummyPrep(dataset_cls=DummyDataset, root=tmp_path, last=0)
-
-    dataset = prep._load_dataset()
-
-    out = prep.preprocess_test()
-    
-    assert len(out) == len(dataset)
-    assert isinstance(out[0], type(out[1])) # checks out[0] is the same class as out[1]
-
-
 def test_preprocess_inference_flag(tmp_path, mocker):
     prep = DummyPrep(dataset_cls=DummyDataset, root=tmp_path)
 

@@ -96,14 +96,13 @@ class BaseTrainer:
 
 
     # train
-    def train(self, params): # params are tuning_params!!!!!!
-
+    def train(self, params): 
 
         # params: schnet ex:{'batch_size': 16, 'lr': .., 'hidden_channels': 256, 'num_filters': 128, 'num_interactions': 4}
         # those the ones I use for tuning, but i also have some fixed (limited resources) like cutoff
 
         """
-        Train a fresh model using the best hyperparameters.
+        Train a fresh model using the given params.
         """
 
         # Loaders

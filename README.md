@@ -87,3 +87,8 @@ Fast Graph Representation Learning with PyTorch Geometric.
 arXiv:1903.02428.
 
 
+
+
+"""
+The project is fully reproducible via Docker; the ML code is packaged as a Python module and installed inside the container to avoid code duplication between training and inference.
+"""

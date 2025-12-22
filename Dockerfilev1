@@ -3,6 +3,7 @@
 ##############################
 FROM python:3.10-slim AS builder
 
+# System deps for PyG CPU + building wheels
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
@@ -14,6 +15,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /build
 
 COPY requirements.txt .
+
+# Install ALL dependencies here (heavy layer)
 RUN pip install --no-cache-dir -r requirements.txt
 
 
@@ -23,27 +26,30 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM python:3.10-slim AS runtime
 
 WORKDIR /app
+#RUN adduser --system --no-create-home appuser
+#USER appuser
 
-# Copy installed dependencies
+# Copy only installed packages from builder
 COPY --from=builder /usr/local/lib/python3.10/site-packages \
                     /usr/local/lib/python3.10/site-packages
 COPY --from=builder /usr/local/bin \
                     /usr/local/bin
 
 ##############################
-# Project files
+# Project files (small)
 ##############################
-COPY pyproject.toml .
+COPY config/ config/
+COPY tests/ tests/
 COPY src/ src/
 COPY scripts/ scripts/
-COPY tests/ tests/
-COPY config/ config/
 
-# INSTALL YOUR PACKAGE
-RUN pip install -e .
+# IMPORTANT: data is NOT copied — mount it when running
+# docker run -v /mydata/qm9:/data ...
 
 EXPOSE 8000
+
 CMD ["bash"]
+
 
 
 

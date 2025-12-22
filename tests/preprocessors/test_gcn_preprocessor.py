@@ -1,5 +1,4 @@
-# tests/preprocessors/test_gcn_preprocessor.py
-from src.preprocessors.gcn import GCNPreprocessor
+from qm9_ml.preprocessors.gcn import GCNPreprocessor
 from tests.conftest import DummyDataset
 
 def test_format_dataset_gcn(tmp_path):

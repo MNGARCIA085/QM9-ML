@@ -2,9 +2,9 @@ from .base import BaseTuner
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from src.models.schnet import SchNetRegressor
 from .registry import TuningRegistry
-from src.training.schnet import SchNetTrainer
+from qm9_ml.models.schnet import SchNetRegressor
+from qm9_ml.training.schnet import SchNetTrainer
 
 
 

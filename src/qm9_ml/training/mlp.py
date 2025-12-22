@@ -2,13 +2,12 @@ from .base import BaseTrainer
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from src.models.schnet import SchNetRegressor
-from src.utils.metrics import compute_metrics
 from .registry import TrainerRegistry
-
 from torch_geometric.loader import DataLoader
 
-from src.models.mlp import SimpleMLP
+from qm9_ml.models.schnet import SchNetRegressor
+from qm9_ml.utils.metrics import compute_metrics
+from qm9_ml.models.mlp import SimpleMLP
 
 
 @TrainerRegistry.register("mlp")
@@ -41,7 +40,7 @@ class MLPTrainer(BaseTrainer):
 
 
     # for inference
-    def predict(self, loader_or_data, model):
+    def predict(self, loader_or_data, model, batch_size=32):
 
         if not isinstance(loader_or_data, DataLoader):
             loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)

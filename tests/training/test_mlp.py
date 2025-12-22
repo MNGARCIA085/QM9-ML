@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
-from src.training.mlp import MLPTrainer
+from qm9_ml.training.mlp import MLPTrainer
 
 
 # ---------------------------------------------------------

@@ -2,7 +2,7 @@ import torch
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
-from src.training.schnet import SchNetTrainer
+from qm9_ml.training.schnet import SchNetTrainer
 
 
 # ------------------------------------------------------------

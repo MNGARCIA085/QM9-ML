@@ -1,5 +1,5 @@
-from src.preprocessors.registry import PreprocessorRegistry
-from src.preprocessors.base import BasePreprocessor
+from qm9_ml.preprocessors.registry import PreprocessorRegistry
+from qm9_ml.preprocessors.base import BasePreprocessor
 
 @PreprocessorRegistry.register("schnet")
 class SchNetPreprocessor(BasePreprocessor):

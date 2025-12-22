@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import tempfile
 from torch_geometric.data import Data
-from src.training.callbacks.checkpoint import ModelCheckpoint
-from src.training.schnet import SchNetTrainer
+from qm9_ml.training.callbacks.checkpoint import ModelCheckpoint
+from qm9_ml.training.schnet import SchNetTrainer
 
 
 

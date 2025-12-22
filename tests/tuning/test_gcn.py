@@ -1,8 +1,9 @@
 import torch
 import optuna
-from src.tuning.gcn import GCNTuner
-from src.tuning.registry import TuningRegistry
 from torch_geometric.data import Data
+from qm9_ml.tuning.gcn import GCNTuner
+from qm9_ml.tuning.registry import TuningRegistry
+
 
 # -----------------------
 # Helper dataset

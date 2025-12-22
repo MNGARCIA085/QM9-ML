@@ -1,19 +1,12 @@
-from src.preprocessors.registry import PreprocessorRegistry
-from src.tuning.registry import TuningRegistry
-from src.training.registry import TrainerRegistry
+from qm9_ml.preprocessors.registry import PreprocessorRegistry
+from qm9_ml.tuning.registry import TuningRegistry
+from qm9_ml.training.registry import TrainerRegistry
 
-from src.utils.logging import logging
+from qm9_ml.utils.logging import logging
 
 # Hydra + OmegaConf
 import hydra
 from omegaconf import DictConfig, OmegaConf
-
-
-
-
-
-
-
 
 
 import mlflow
@@ -102,7 +95,7 @@ def main(cfg: DictConfig):
 
 
     # select best model
-    from src.utils.logging import select_best_model
+    from qm9_ml.utils.logging import select_best_model
     res = select_best_model('qm9')
     best_run_id = res['run_id']
 

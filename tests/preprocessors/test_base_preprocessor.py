@@ -1,7 +1,6 @@
 import torch
-from src.preprocessors.base import BasePreprocessor
 from tests.conftest import DummyDataset
-
+from qm9_ml.preprocessors.base import BasePreprocessor
 
 
 class DummyPrep(BasePreprocessor):
@@ -37,6 +36,7 @@ def test_preprocess_returns_train_val_split(tmp_path):
 
 
 def test_preprocess_inference_flag(tmp_path, mocker):
+    """requires pytest-mock"""
     prep = DummyPrep(dataset_cls=DummyDataset, root=tmp_path)
 
     spy = mocker.spy(prep, "_format_dataset")
@@ -46,20 +46,3 @@ def test_preprocess_inference_flag(tmp_path, mocker):
     _, kwargs = spy.call_args
     assert kwargs["is_inference"] is True
 
-
-
-"""
-def test_preprocessor_outputs_valid_data(train_val):
-    train_ds, val_ds = train_val
-
-    assert len(train_ds) > 0
-    assert len(val_ds) > 0
-
-    sample = train_ds[0]
-
-    # Required fields for SchNet
-    assert hasattr(sample, "z")
-    assert hasattr(sample, "pos")
-    assert hasattr(sample, "y")
-    assert sample.y.shape[-1] == 1  # single target column
-"""

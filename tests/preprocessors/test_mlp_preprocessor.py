@@ -1,6 +1,6 @@
 import torch
-from src.preprocessors.mlp import MLPPreprocessor
 from tests.conftest import DummyDataset
+from qm9_ml.preprocessors.mlp import MLPPreprocessor
 
 def test_format_dataset_mlp(tmp_path):
     prep = MLPPreprocessor(dataset_cls=DummyDataset, root=tmp_path, last=0)

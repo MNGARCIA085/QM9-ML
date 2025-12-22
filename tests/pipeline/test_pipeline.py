@@ -1,9 +1,9 @@
 import pytest
 from omegaconf import OmegaConf
 
-from src.preprocessors.registry import PreprocessorRegistry
-from src.training.registry import TrainerRegistry
-from src.tuning.registry import TuningRegistry
+from qm9_ml.preprocessors.registry import PreprocessorRegistry
+from qm9_ml.training.registry import TrainerRegistry
+from qm9_ml.tuning.registry import TuningRegistry
 
 
 @pytest.fixture

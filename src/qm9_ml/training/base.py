@@ -9,7 +9,7 @@ import os
 import tempfile
 
 
-from src.utils.metrics import compute_metrics
+from qm9_ml.utils.metrics import compute_metrics
 from .callbacks.early_stopping import EarlyStopping
 from .callbacks.checkpoint import ModelCheckpoint
 from .callbacks.lr_schedulers import get_plateau_scheduler

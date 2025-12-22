@@ -1,10 +1,10 @@
 import pytest
-from src.preprocessors.registry import PreprocessorRegistry
+from qm9_ml.preprocessors.registry import PreprocessorRegistry
 
 # I need this to test registry
-from src.preprocessors.mlp import MLPPreprocessor
-from src.preprocessors.gcn import GCNPreprocessor
-from src.preprocessors.schnet import SchNetPreprocessor
+from qm9_ml.preprocessors.mlp import MLPPreprocessor
+from qm9_ml.preprocessors.gcn import GCNPreprocessor
+from qm9_ml.preprocessors.schnet import SchNetPreprocessor
 
 
 def test_registry_resolves_classes():
@@ -15,7 +15,7 @@ def test_registry_resolves_classes():
 
 def test_registry_create():
     pre = PreprocessorRegistry.create("mlp", target=0)
-    from src.preprocessors.mlp import MLPPreprocessor
+    from qm9_ml.preprocessors.mlp import MLPPreprocessor
     assert isinstance(pre, MLPPreprocessor)
 
 def test_registry_unknown():

@@ -1,5 +1,6 @@
-from src.preprocessors.schnet import SchNetPreprocessor
 from tests.conftest import DummyDataset
+from qm9_ml.preprocessors.schnet import SchNetPreprocessor
+
 
 def test_format_dataset_schnet(tmp_path):
     prep = SchNetPreprocessor(dataset_cls=DummyDataset, root=tmp_path, last=0)

@@ -27,6 +27,9 @@ venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Install the project package (src layout)
+pip install -e .
 ```
 
 
@@ -65,7 +68,7 @@ You can execute any module in the scripts/ directory directly and override param
 ```bash
 python -m scripts.tuning model_type=schnet shared.epochs=50
 python -m scripts.tuning model_type=gcn preprocessor.val_ratio=0.1 shared.num_trials=10
-python -m src.scripts.tuning -m model_type=gcn,schnet shared.epochs=15
+python -m scripts.tuning -m model_type=gcn,schnet shared.epochs=15
 python -m scripts.evaluation
 python -m scripts.pipeline
 python -m scripts.inference
@@ -88,7 +91,3 @@ arXiv:1903.02428.
 
 
 
-
-"""
-The project is fully reproducible via Docker; the ML code is packaged as a Python module and installed inside the container to avoid code duplication between training and inference.
-"""

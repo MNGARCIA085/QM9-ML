@@ -1,9 +1,10 @@
-model_type: "mlp"  # mlp, gcn, schnet
+model_type: "schnet"  # mlp, gcn, schnet
 defaults:
   - shared/training
   - shared/tuning 
   - preprocessor: preprocessor
-  - tuning: mlp
+  - training: schnet
+  - tuning: schnet
   - override hydra/launcher: joblib
   - _self_
 

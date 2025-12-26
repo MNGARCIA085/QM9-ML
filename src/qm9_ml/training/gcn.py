@@ -89,8 +89,12 @@ class GCNTrainer(BaseTrainer):
                 batch = batch.to(device)
 
                 out = model(batch)
-                pred = out.squeeze(-1)
-                target = batch.y.squeeze(-1)
+                
+                #pred = out.squeeze(-1)
+                #target = batch.y.squeeze(-1)
+                pred = out.view(-1)
+                target = batch.y.view(-1)
+
 
                 loss = criterion(pred, target)
 

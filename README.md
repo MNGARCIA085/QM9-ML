@@ -66,12 +66,21 @@ You can execute any module in the scripts/ directory directly and override param
 
 
 ```bash
+python -m scripts.training -m model_type=mlp training=mlp training.hidden=256
 python -m scripts.tuning model_type=schnet shared.epochs=50
 python -m scripts.tuning model_type=gcn preprocessor.val_ratio=0.1 shared.num_trials=10
 python -m scripts.tuning -m model_type=gcn,schnet shared.epochs=15
 python -m scripts.evaluation
 python -m scripts.pipeline
 python -m scripts.inference
+```
+
+
+### MLFLow
+
+```
+.... src$ mlflow server --backend-store-uri sqlite:///mlflow.db  --default-artifact-root ./mlruns --host localhost  --port 5000
+
 ```
 
 

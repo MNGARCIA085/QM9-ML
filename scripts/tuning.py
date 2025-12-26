@@ -44,7 +44,7 @@ def main(cfg: DictConfig):
 
     cfg_tuning = OmegaConf.load(f"config/tuning/{model_type}.yaml")
 
-    #print("Registry:", PreprocessorRegistry._registry)
+    #print("Registry:", PreprocessorRegistry._registry), registry check
 
     # preprocessing
     prep = PreprocessorRegistry.create(

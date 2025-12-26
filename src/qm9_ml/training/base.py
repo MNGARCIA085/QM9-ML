@@ -174,7 +174,6 @@ class BaseTrainer:
             final_epoch = epoch + 1  # update each loop
 
 
-
         # Load best model
         model.load_state_dict(torch.load(ckpt_path))
 

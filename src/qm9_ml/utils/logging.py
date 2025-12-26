@@ -9,7 +9,7 @@ import uuid
 
 # Project root (2 levels up from this file)
 
-root_dir = Path(__file__).resolve().parents[2] # 2 or 3
+root_dir = Path(__file__).resolve().parents[2] # maybe 3
 
 # Tracking DB
 mlflow.set_tracking_uri(f"sqlite:///{root_dir / 'mlflow.db'}")

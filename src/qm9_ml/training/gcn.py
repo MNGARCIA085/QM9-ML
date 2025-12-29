@@ -5,7 +5,7 @@ import torch.nn as nn
 from qm9_ml.models.schnet import SchNetRegressor
 from qm9_ml.utils.metrics import compute_metrics
 from .registry import TrainerRegistry
-
+from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
 from qm9_ml.models.gcn import SimpleGCN
@@ -48,15 +48,22 @@ class GCNTrainer(BaseTrainer):
 
     # preds
     def predict(self, loader_or_data, model, batch_size=32):
-
-
-        if not isinstance(loader_or_data, DataLoader):
-            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
-        else:
-            loader = loader_or_data
-
+        """Run inference and return predictions."""
 
         model.eval()
+
+        # --- Normalize input ---
+        if isinstance(loader_or_data, DataLoader):
+            loader = loader_or_data
+
+        elif isinstance(loader_or_data, Data):
+            loader = DataLoader([loader_or_data], batch_size=1, shuffle=False)
+
+        else:
+            # Assume iterable of Data
+            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
+
+        
         preds = []
 
         with torch.no_grad():
@@ -68,7 +75,6 @@ class GCNTrainer(BaseTrainer):
 
         preds = torch.cat(preds)
         return preds
-
 
 
     # run epoch

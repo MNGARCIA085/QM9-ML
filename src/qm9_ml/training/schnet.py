@@ -3,7 +3,9 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from .registry import TrainerRegistry
+from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
+
 
 from qm9_ml.models.schnet import SchNetRegressor
 from qm9_ml.utils.metrics import compute_metrics
@@ -57,12 +59,18 @@ class SchNetTrainer(BaseTrainer):
     def predict(self, loader_or_data, model, batch_size=32):
         """Run inference and return only predictions."""
 
-        if not isinstance(loader_or_data, DataLoader):
-            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
-        else:
+        model.eval()
+
+        # --- Normalize input ---
+        if isinstance(loader_or_data, DataLoader):
             loader = loader_or_data
 
-        model.eval()
+        elif isinstance(loader_or_data, Data):
+            loader = DataLoader([loader_or_data], batch_size=1, shuffle=False)
+
+        else:
+            # Assume iterable of Data
+            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
         
         preds = []
 

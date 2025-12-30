@@ -58,15 +58,6 @@ class MLPTrainer(BaseTrainer):
             loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
 
 
-        """
-        if not isinstance(loader_or_data, DataLoader):
-            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
-        else:
-            loader = loader_or_data
-
-        model.eval()
-        """
-
         preds = []
 
         with torch.no_grad():

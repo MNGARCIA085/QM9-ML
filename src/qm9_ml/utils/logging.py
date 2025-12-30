@@ -1,14 +1,15 @@
 import mlflow
 import os
+import pandas as pd
+import uuid
+import shutil
+import json
 from mlflow.tracking import MlflowClient
 from pathlib import Path
 from .plots import plot_losses
-import pandas as pd
-import uuid
 
 
 # Project root (2 levels up from this file)
-
 root_dir = Path(__file__).resolve().parents[2] # maybe 3
 
 # Tracking DB
@@ -20,12 +21,11 @@ os.makedirs(artifact_dir, exist_ok=True)
 
 
 
-
 # later -> add epochs........
 
 
 # logging (for the tuning exps)
-def logging(exp_name, run_name, artifacts, results, model_type, trials_data, importances=None):
+def logging(exp_name, run_name, artifacts, results, model_type, trials_data=None, importances=None):
 
     # ensures artifact path is set
     mlflow.set_experiment(exp_name)
@@ -69,14 +69,14 @@ def logging(exp_name, run_name, artifacts, results, model_type, trials_data, imp
 
         #----------trials--------------
         # Save to a temporary JSON
-        df = pd.DataFrame(trials_data)
-        path = f"optuna_trials_{uuid.uuid4().hex}.json" # maybe name from logging config
-        df.to_json(path, orient="records", indent=2)
-        mlflow.log_artifact(path)
-        os.remove(path)
+        if trials_data is not None:
+            df = pd.DataFrame(trials_data)
+            path = f"optuna_trials_{uuid.uuid4().hex}.json" # maybe name from logging config
+            df.to_json(path, orient="records", indent=2)
+            mlflow.log_artifact(path)
+            os.remove(path)
 
         # Log hyperparameter importances
-        import json
         if importances is not None:
             path = f"optuna_importances_{uuid.uuid4().hex}.json"
             with open(path, "w") as f:
@@ -153,11 +153,6 @@ insteado of order_by
 
 """
 
-
-
-
-
-
 # log test results
 def log_test_results(exp_name, tuning_run_id, model_type, metrics, hparams):
 
@@ -182,6 +177,23 @@ def log_test_results(exp_name, tuning_run_id, model_type, metrics, hparams):
         mlflow.log_params(hparams)
 
 
+
+# export best model to a given location
+def export_best_model(run_id: str, dst: str):
+    dst_path = Path(dst)
+
+    # Remove old best model
+    if dst_path.exists():
+        shutil.rmtree(dst_path)
+
+    # Download artifacts from MLflow
+    mlflow.artifacts.download_artifacts(
+        run_id=run_id,
+        artifact_path="model",
+        dst_path=str(dst_path),
+    )
+
+    print(f"Best model exported to {dst_path}")
 
 
 

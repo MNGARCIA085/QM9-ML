@@ -1,10 +1,12 @@
-from qm9_ml.preprocessors.registry import PreprocessorRegistry
-from qm9_ml.training.registry import TrainerRegistry
-from qm9_ml.utils.logging import logging
-
 # Hydra + OmegaConf
 import hydra
 from omegaconf import DictConfig, OmegaConf
+
+from qm9_ml.preprocessors.registry import PreprocessorRegistry
+from qm9_ml.training.registry import TrainerRegistry
+from qm9_ml.utils.logging import logging, select_best_model, export_best_model
+
+
 
 
 
@@ -19,8 +21,8 @@ def main(cfg: DictConfig):
 
     print(cfg)
 
-    # params for training
-    cfg_training = OmegaConf.load(f"config/training/{model_type}.yaml")
+    # params for training; not really i can use cfg.training given how i execute the script
+    cfg_training = OmegaConf.load(f"config/training/{model_type}.yaml") 
 
     print(cfg_training)
 
@@ -45,24 +47,17 @@ def main(cfg: DictConfig):
 
     results = trainer.train(cfg_training)
 
-    # logging (do an appr. logging later!!!!)
-    # logging(cfg.exp_name, cfg.run_tuning_name, artifacts, results, model_type, trials_data, importances)
+    # logging
+    logging(cfg.exp_name, cfg.run_training_name, artifacts, results, model_type)
 
-    # if this is the best model so far, save it
-
-
-
-    # select best model
-    """
-    from qm9_ml.utils.logging import select_best_model
+    # select and then save best model (simplistic way: always expport the best)
     res = select_best_model('qm9')
-    best_run_id = res['run_id']
-
+    best_run_id = res['run_id'] # maybe add later model_type
     export_best_model(
         run_id=best_run_id,
         dst="../api-repo/models/best_model"
     )
-    """
+    
 
 
 if __name__ == "__main__":
@@ -70,4 +65,4 @@ if __name__ == "__main__":
 
 
 # python -m scripts.training -m model_type=mlp training=mlp
-#python -m scripts.training -m model_type=mlp training=mlp training.hidden=120 shared.epochs=4
+# python -m scripts.training -m model_type=mlp training=mlp training.hidden=120 shared.epochs=4

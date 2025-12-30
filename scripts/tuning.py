@@ -1,35 +1,12 @@
-from qm9_ml.preprocessors.registry import PreprocessorRegistry
-from qm9_ml.tuning.registry import TuningRegistry
-from qm9_ml.training.registry import TrainerRegistry
-
-from qm9_ml.utils.logging import logging
 
 # Hydra + OmegaConf
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-
-import mlflow
-import shutil
-from pathlib import Path
-
-def export_best_model(run_id: str, dst: str):
-    dst_path = Path(dst)
-
-    # Remove old best model
-    if dst_path.exists():
-        shutil.rmtree(dst_path)
-
-    # Download artifacts from MLflow
-    mlflow.artifacts.download_artifacts(
-        run_id=run_id,
-        artifact_path="model",
-        dst_path=str(dst_path),
-    )
-
-    print(f"Best model exported to {dst_path}")
-
-
+from qm9_ml.preprocessors.registry import PreprocessorRegistry
+from qm9_ml.tuning.registry import TuningRegistry
+from qm9_ml.training.registry import TrainerRegistry
+from qm9_ml.utils.logging import logging, select_best_model, export_best_model
 
 
 
@@ -93,12 +70,9 @@ def main(cfg: DictConfig):
     logging(cfg.exp_name, cfg.run_tuning_name, artifacts, results, model_type, trials_data, importances)
 
 
-
-    # select best model
-    from qm9_ml.utils.logging import select_best_model
+    # select and then save best model (simplistic way: always expport the best)
     res = select_best_model('qm9')
-    best_run_id = res['run_id']
-
+    best_run_id = res['run_id'] # maybe add later model_type
     export_best_model(
         run_id=best_run_id,
         dst="../api-repo/models/best_model"

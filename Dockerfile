@@ -40,7 +40,7 @@ COPY tests/ tests/
 COPY config/ config/
 
 # INSTALL YOUR PACKAGE
-RUN pip install -e .
+RUN pip install -e . # uses the toml to know is python package
 
 EXPOSE 8000
 CMD ["bash"]

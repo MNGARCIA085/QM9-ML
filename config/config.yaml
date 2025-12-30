@@ -1,4 +1,6 @@
 model_type: "schnet"  # mlp, gcn, schnet
+
+
 defaults:
   - shared/training
   - shared/tuning 
@@ -9,10 +11,12 @@ defaults:
   - _self_
 
 
-
 random_state: 42
 exp_name: qm9
 run_tuning_name: tuning
+run_training_name: training
 hydra:
   launcher:
     n_jobs: 2
+
+

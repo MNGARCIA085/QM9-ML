@@ -1,12 +1,7 @@
 from .base import BaseTrainer
 import torch
 import torch.optim as optim
-import torch.nn as nn
 from .registry import TrainerRegistry
-from torch_geometric.data import Data
-from torch_geometric.loader import DataLoader
-
-
 from qm9_ml.models.schnet import SchNetRegressor
 from qm9_ml.utils.metrics import compute_metrics
 
@@ -25,64 +20,6 @@ class SchNetTrainer(BaseTrainer):
             lr=params["lr"],
             weight_decay=params.get("weight_decay", 1e-5),
         )
-
-
-
-    # ---------------------------------------------------------
-    # Predictions
-    # ---------------------------------------------------------
-    
-
-    # returns preds AND true labels
-    def get_predictions(self, loader, model):
-        model.eval()
-
-        preds, trues = [], []
-
-        with torch.no_grad():
-            for batch in loader:
-                batch = batch.to(self.device)
-
-                y_hat = model(batch.z, batch.pos, batch.batch).squeeze(-1)
-                y = batch.y.squeeze(-1).float()
-
-                preds.append(y_hat.cpu())
-                trues.append(y.cpu())
-
-        trues = torch.cat(trues)
-        preds = torch.cat(preds)
-        return trues, preds
-
-
-
-    # for inference
-    def predict(self, loader_or_data, model, batch_size=32):
-        """Run inference and return only predictions."""
-
-        model.eval()
-
-        # --- Normalize input ---
-        if isinstance(loader_or_data, DataLoader):
-            loader = loader_or_data
-
-        elif isinstance(loader_or_data, Data):
-            loader = DataLoader([loader_or_data], batch_size=1, shuffle=False)
-
-        else:
-            # Assume iterable of Data
-            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
-        
-        preds = []
-
-        with torch.no_grad():
-            for batch in loader:
-                batch = batch.to(self.device)
-                y_hat = model(batch.z, batch.pos, batch.batch).squeeze(-1)
-                preds.append(y_hat.cpu())
-
-        return torch.cat(preds)
-
-
 
 
     # run one epoch

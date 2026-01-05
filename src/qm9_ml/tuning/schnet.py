@@ -5,6 +5,8 @@ import torch.nn as nn
 from .registry import TuningRegistry
 from qm9_ml.models.schnet import SchNetRegressor
 from qm9_ml.training.schnet import SchNetTrainer
+from qm9_ml.inference.schnet import SchNetPredictor
+from qm9_ml.utils.metrics import compute_metrics
 
 
 
@@ -12,6 +14,7 @@ from qm9_ml.training.schnet import SchNetTrainer
 class SchNetTuner(BaseTuner):
 
     trainer_cls = SchNetTrainer
+    predictor_cls = SchNetPredictor
 
     def __init__(self, train_ds, val_ds, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs_trials=epochs_trials, device=device)
@@ -91,8 +94,11 @@ class SchNetTuner(BaseTuner):
 
             scheduler.step(val_loss)
 
-        # ---- compute metrics at the end ----        
-        val_metrics = trainer.evaluate(val_loader, model)
+        # ---- compute metrics at the end ----
+        predictor = self.predictor_cls(model=model, device=self.device)
+        y_true, y_pred = predictor.predict_with_targets(val_loader)
+        val_metrics = compute_metrics(y_true, y_pred)        
+
         
         trial.set_user_attr("metrics", val_metrics)
 

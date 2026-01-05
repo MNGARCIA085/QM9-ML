@@ -5,12 +5,15 @@ import torch.optim as optim
 from .registry import TuningRegistry
 from qm9_ml.models.gcn import SimpleGCN
 from qm9_ml.training.gcn import GCNTrainer
+from qm9_ml.inference.gcn import GCNPredictor
+from qm9_ml.utils.metrics import compute_metrics
 
 
 @TuningRegistry.register("gcn")
 class GCNTuner(BaseTuner):
 
     trainer_cls = GCNTrainer
+    predictor_cls = GCNPredictor
 
     def __init__(self, train_ds, val_ds, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs_trials=epochs_trials, device=device)
@@ -58,7 +61,10 @@ class GCNTuner(BaseTuner):
         val_loss = trainer.run_epoch(False, val_loader, model, criterion) # only last
         
         # ---- compute metrics ----
-        val_metrics = trainer.evaluate(val_loader, model)
+        predictor = self.predictor_cls(model=model, device=self.device)
+        y_true, y_pred = predictor.predict_with_targets(val_loader)
+        val_metrics = compute_metrics(y_true, y_pred)
+
 
         # ---- store metadata in the trial ----
         trial.set_user_attr("metrics", val_metrics)

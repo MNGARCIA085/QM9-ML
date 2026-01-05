@@ -28,28 +28,6 @@ class BaseTrainer:
         self.patience = 30 # for early stopping
 
 
-
-    # get preds and labels
-    def get_predictions(self, loader, model):
-        """Child must implement. Returns y_true, y_pred"""
-        raise NotImplementedError
-
-    # predict
-    def predict(self, loader_or_data, model, batch_size):
-        """Child must implement. Returns y_pred"""
-        raise NotImplementedError
-
-    # evaluate a given loader
-    def evaluate(self, loader, model, batch_size=32):
-        """Evaluate the model on a dataset or DataLoader."""
-        
-        # If it's not already a DataLoader, wrap it
-        if not isinstance(loader, DataLoader):
-            loader = DataLoader(loader, batch_size=batch_size, shuffle=False)
-
-        y_true, y_pred = self.get_predictions(loader, model)
-        return compute_metrics(y_true, y_pred)
-
     
     def run_epoch(self, train, loader, model, criterion, optimizer):
         raise NotImplementedError("Subclasses must implement it")
@@ -57,8 +35,6 @@ class BaseTrainer:
 
     def create_model_from_params(self, params):
         raise NotImplementedError
-
-
 
 
     #-------------------------------------------------------------------------
@@ -180,10 +156,6 @@ class BaseTrainer:
         # Remove temporary checkpoint
         os.remove(ckpt_path)
         
-        # ---- compute additional metrics (for train and val; final metrics) ----
-        train_metrics = self.evaluate(train_loader, model)
-        val_metrics = self.evaluate(val_loader, model)
-
         # all hyperparams
         hyperparams = {
             **model.config,     # unpack existing config
@@ -195,8 +167,6 @@ class BaseTrainer:
         }
 
 
-
-
         # --- Return results ---
         return(
                 {
@@ -204,11 +174,9 @@ class BaseTrainer:
                     "train":
                         {
                             "losses": train_losses,
-                            "metrics": train_metrics,
                         },
                     "val":{
                         "losses": val_losses,
-                        "metrics": val_metrics,
                     },
                     "hyperparams": hyperparams,
                 }

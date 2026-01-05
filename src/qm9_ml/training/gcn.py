@@ -16,66 +16,9 @@ class GCNTrainer(BaseTrainer):
     def __init__(self, train_ds=None, val_ds=None, test_ds=None, epochs=10, device=None, **kwargs):
         super().__init__(train_ds, val_ds, test_ds, epochs=epochs, device=device)
 
-
-
     # create model
     def create_model_from_params(self, params):
         return SimpleGCN(hidden=params["hidden"]).to(self.device)
-
-    # ---------------------------------------------------------
-    # Predictions
-    # ---------------------------------------------------------
-    def get_predictions(self, loader, model):
-        model.eval()
-        preds = []
-        trues = []
-
-        with torch.no_grad():
-            for batch in loader:
-                batch = batch.to(self.device)
-
-                out = model(batch)          # [num_graphs, 1]
-                preds.append(out.view(-1).cpu())
-
-                y = batch.y.view(-1).cpu()  # [num_graphs]
-                trues.append(y)
-
-        preds = torch.cat(preds)
-        trues = torch.cat(trues)
-
-        return trues, preds
-
-
-    # preds
-    def predict(self, loader_or_data, model, batch_size=32):
-        """Run inference and return predictions."""
-
-        model.eval()
-
-        # --- Normalize input ---
-        if isinstance(loader_or_data, DataLoader):
-            loader = loader_or_data
-
-        elif isinstance(loader_or_data, Data):
-            loader = DataLoader([loader_or_data], batch_size=1, shuffle=False)
-
-        else:
-            # Assume iterable of Data
-            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
-
-        
-        preds = []
-
-        with torch.no_grad():
-            for batch in loader:
-                batch = batch.to(self.device)
-                out = model(batch)          # [num_graphs, 1]
-                preds.append(out.view(-1).cpu())
-                y = batch.y.view(-1).cpu()  # [num_graphs]
-
-        preds = torch.cat(preds)
-        return preds
-
 
     # run epoch
     def run_epoch(self, train, loader, model, criterion, optimizer=None):

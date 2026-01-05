@@ -1,16 +1,11 @@
-from torch_geometric.data import Data
 import torch
 import mlflow
 import hydra
+from torch_geometric.data import Data
 from omegaconf import DictConfig, OmegaConf
-
 from qm9_ml.preprocessors.registry import PreprocessorRegistry
-from qm9_ml.tuning.registry import TuningRegistry
-from qm9_ml.training.registry import TrainerRegistry
-from qm9_ml.utils.logging import logging
-from qm9_ml.utils.logging import select_best_model
-
-
+from qm9_ml.inference.registry import PredictorRegistry
+from qm9_ml.utils.logging import logging, select_best_model
 
 
 
@@ -26,9 +21,10 @@ def main(cfg: DictConfig):
     model_type = results['model_type']
     model = mlflow.pytorch.load_model(results["model_uri"])
 
-    # trainer
-    trainer = TrainerRegistry.create(
+    # predictor
+    predictor = PredictorRegistry.create(
             model_type,
+            model=model,
         )
 
     # ------------- Predictions-----------------
@@ -46,7 +42,7 @@ def main(cfg: DictConfig):
                 name="mol1",
                 idx=torch.tensor([0])
             )
-    aux = trainer.predict(sample, model)
+    aux = predictor.predict(sample)
     print(aux)
 
 
@@ -57,7 +53,7 @@ def main(cfg: DictConfig):
     )
     test_ds = prep.preprocess_test()
 
-    preds = trainer.predict(test_ds, model)
+    preds = predictor.predict(test_ds)
 
     print(preds.shape)
     print(preds)

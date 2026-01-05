@@ -1,4 +1,4 @@
-class TrainerRegistry:
+class PredictorRegistry:
     _registry = {}
 
     @classmethod
@@ -11,5 +11,5 @@ class TrainerRegistry:
     @classmethod
     def create(cls, name, **kwargs):
         if name not in cls._registry:
-            raise ValueError(f"Unknown trainer: {name}")
+            raise ValueError(f"Unknown predictor: {name}")
         return cls._registry[name](**kwargs)

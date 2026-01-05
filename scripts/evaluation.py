@@ -1,14 +1,11 @@
-from qm9_ml.preprocessors.registry import PreprocessorRegistry
-from qm9_ml.tuning.registry import TuningRegistry
-from qm9_ml.training.registry import TrainerRegistry
-
-from qm9_ml.utils.logging import logging
-
-from qm9_ml.utils.logging import select_best_model, log_test_results
 import mlflow
-
 import hydra
 from omegaconf import DictConfig, OmegaConf
+from qm9_ml.preprocessors.registry import PreprocessorRegistry
+from qm9_ml.inference.registry import PredictorRegistry
+from qm9_ml.utils.logging import logging,select_best_model, log_test_results
+from qm9_ml.utils.metrics import compute_metrics
+
 
 
 
@@ -31,15 +28,18 @@ def main(cfg: DictConfig):
     )
     test_ds = prep.preprocess_test()
 
-    # --- evaluate (using the appropiate trainer) ---
+    # --- evaluate (using the appropiate predictor) ---
 
-    # trainer
-    trainer = TrainerRegistry.create(
+    # predictor
+    predictor = PredictorRegistry.create(
             model_type,
+            model=model,
         )
+    y_true, y_pred = predictor.predict_with_targets(test_ds)
 
-    # evaluate
-    metrics = trainer.evaluate(test_ds, model)
+    # metrics
+    metrics = compute_metrics(y_true, y_pred)
+
 
     print(len(test_ds))
 

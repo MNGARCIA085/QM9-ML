@@ -5,7 +5,8 @@ import torch.optim as optim
 from .registry import TuningRegistry
 from qm9_ml.models.mlp import SimpleMLP
 from qm9_ml.training.mlp import MLPTrainer
-
+from qm9_ml.inference.mlp import MLPPredictor
+from qm9_ml.utils.metrics import compute_metrics
 
 
 @TuningRegistry.register("mlp")
@@ -13,6 +14,8 @@ class MLPTuner(BaseTuner):
 
 
     trainer_cls = MLPTrainer
+    predictor_cls = MLPPredictor
+
 
     def __init__(self, train_ds, val_ds, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs_trials=epochs_trials, device=device)
@@ -41,7 +44,7 @@ class MLPTuner(BaseTuner):
 
 
         batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
-        lr = trial.suggest_loguniform("lr", lr_low, lr_high)
+        lr = trial.suggest_float("lr", lr_low, lr_high, log=True)
 
 
         trainer = self.trainer_cls(self.train_ds, self.val_ds)
@@ -61,8 +64,11 @@ class MLPTuner(BaseTuner):
         # final validation loss
         val_loss = trainer.run_epoch(False, val_loader, model, criterion)
       
-        # ---- compute metrics ----
-        val_metrics = trainer.evaluate(val_loader, model)
+        # ---- compute val metrics ----
+        predictor = self.predictor_cls(model=model, device=self.device)
+        y_true, y_pred = predictor.predict_with_targets(val_loader)
+        val_metrics = compute_metrics(y_true, y_pred)
+
 
         # ---- store metadata in the trial ---- (later a dataclass maybe)
         trial.set_user_attr("metrics", val_metrics)

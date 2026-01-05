@@ -1,13 +1,7 @@
 from .base import BaseTrainer
 import torch
 import torch.optim as optim
-import torch.nn as nn
 from .registry import TrainerRegistry
-from torch_geometric.data import Data
-from torch_geometric.loader import DataLoader
-
-from qm9_ml.models.schnet import SchNetRegressor
-from qm9_ml.utils.metrics import compute_metrics
 from qm9_ml.models.mlp import SimpleMLP
 
 
@@ -15,60 +9,6 @@ from qm9_ml.models.mlp import SimpleMLP
 class MLPTrainer(BaseTrainer):
     def __init__(self, train_ds=None, val_ds=None, test_ds=None, epochs=10, device=None, **kwargs):
         super().__init__(train_ds, val_ds, test_ds, epochs=epochs, device=device)
-
-    # ---------------------------------------------------------
-    # Predictions
-    # ---------------------------------------------------------
-    def get_predictions(self, loader, model):
-        model.eval()
-
-        preds = []
-        trues = []
-
-        with torch.no_grad():
-            for batch in loader:
-                batch = batch.to(self.device)
-
-                y_hat = model(batch)                 # shape [batch_size]
-                y = batch.y.view(-1).to(self.device) # ensure [batch_size]
-
-                preds.append(y_hat.cpu())
-                trues.append(y.cpu())
-
-        preds = torch.cat(preds)
-        trues = torch.cat(trues)
-        return trues, preds
-
-
-    # for inference
-    def predict(self, loader_or_data, model, batch_size=32):
-        """Run inference and return only predictions."""
-
-        model.eval()
-
-        # --- Normalize input ---
-        if isinstance(loader_or_data, DataLoader):
-            loader = loader_or_data
-
-        elif isinstance(loader_or_data, Data):
-            loader = DataLoader([loader_or_data], batch_size=1, shuffle=False)
-
-        else:
-            # Assume iterable of Data
-            loader = DataLoader(loader_or_data, batch_size=batch_size, shuffle=False)
-
-
-        preds = []
-
-        with torch.no_grad():
-            for batch in loader:
-                batch = batch.to(self.device)
-                y_hat = model(batch)                 # shape [batch_size]
-                y = batch.y.view(-1).to(self.device) # ensure [batch_size]
-                preds.append(y_hat.cpu())
-
-        return torch.cat(preds)
-
 
 
     # run epoch

@@ -7,7 +7,8 @@ from optuna.importance import get_param_importances
 
 class BaseTuner:
 
-    trainer_cls = None   # subclasses must define this
+    trainer_cls = None   # subclasses must define this; later wiy type is cleaner
+    preictor_cls = None
 
     def __init__(self, train_ds, val_ds, epochs_trials=5, device=None):
         self.train_ds = train_ds

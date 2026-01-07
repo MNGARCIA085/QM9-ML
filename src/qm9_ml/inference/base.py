@@ -40,3 +40,6 @@ class BasePredictor:
     def predict(self, data):
         """Child must implement. Returns y_pred"""
         raise NotImplementedError
+
+
+    

@@ -57,8 +57,8 @@ class GCNTuner(BaseTuner):
 
         # training loop
         for _ in range(self.epochs_trials):
-            trainer.run_epoch(True, train_loader, model, criterion, optimizer)
-        val_loss = trainer.run_epoch(False, val_loader, model, criterion) # only last
+            trainer.train_epoch(train_loader, model, criterion, optimizer)
+        val_loss = trainer.val_epoch(val_loader, model, criterion) # only last
         
         # ---- compute metrics ----
         predictor = self.predictor_cls(model=model, device=self.device)

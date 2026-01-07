@@ -89,8 +89,8 @@ class SchNetTuner(BaseTuner):
 
         # ---- tuning loop ----
         for epoch in range(self.epochs_trials):
-            trainer.run_epoch(True,  train_loader, model, criterion, optimizer)
-            val_loss = trainer.run_epoch(False, val_loader, model, criterion)
+            trainer.train_epoch(train_loader, model, criterion, optimizer)
+            val_loss = trainer.val_epoch(val_loader, model, criterion)
 
             scheduler.step(val_loss)
 

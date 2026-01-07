@@ -58,11 +58,11 @@ class MLPTuner(BaseTuner):
 
 
         for _ in range(self.epochs_trials): 
-            trainer.run_epoch(True, train_loader, model, criterion, optimizer)
+            trainer.train_epoch(train_loader, model, criterion, optimizer)
         
 
         # final validation loss
-        val_loss = trainer.run_epoch(False, val_loader, model, criterion)
+        val_loss = trainer.val_epoch(val_loader, model, criterion)
       
         # ---- compute val metrics ----
         predictor = self.predictor_cls(model=model, device=self.device)

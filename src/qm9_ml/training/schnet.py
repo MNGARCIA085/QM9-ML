@@ -13,6 +13,15 @@ class SchNetTrainer(BaseTrainer):
         super().__init__(train_ds, val_ds, test_ds, epochs=epochs, device=device)
 
 
+    # create model
+    def create_model_from_params(self, params):
+        return SchNetRegressor(
+            hidden_channels=params["hidden_channels"],
+            num_filters=params["num_filters"],
+            num_interactions=params["num_interactions"]
+        ).to(self.device)  # later cutoff
+
+
     # override optimizer
     def configure_optimizer(self, model, params):
         return torch.optim.AdamW(
@@ -22,48 +31,10 @@ class SchNetTrainer(BaseTrainer):
         )
 
 
-    # run one epoch
-    def run_epoch(self, train, loader, model, criterion, optimizer=None):
-        if train:
-            model.train()
-        else:
-            model.eval()
-
-        total_loss = 0
-
-        # --- IMPORTANT ---
-        # Use torch.no_grad() only when NOT training
-        context = torch.enable_grad() if train else torch.no_grad()
-        with context:
-            for batch in loader:
-                batch = batch.to(self.device)
-
-                if train:
-                    optimizer.zero_grad()
-
-                out = model(batch.z, batch.pos, batch.batch)
-                pred = out.squeeze(-1)
-                target = batch.y.squeeze(-1)
-
-
-                loss = criterion(pred, target)
-
-                if train:
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0) # gradient clipping
-                    optimizer.step()
-
-                total_loss += loss.item() * batch.num_graphs
-
-        return total_loss / len(loader.dataset)
-
-
-
-    # create model
-    def create_model_from_params(self, params):
-        return SchNetRegressor(
-            hidden_channels=params["hidden_channels"],
-            num_filters=params["num_filters"],
-            num_interactions=params["num_interactions"]
-        ).to(self.device)  # later cutoff
+    # ------ Step  ------
+    def _step(self, batch, model, criterion):
+        out = model(batch.z, batch.pos, batch.batch)
+        pred = out.squeeze(-1)
+        target = batch.y.squeeze(-1)
+        return criterion(pred, target)
 

@@ -28,16 +28,10 @@ class BaseTrainer:
         self.patience = 30 # for early stopping
 
 
-    
-    def run_epoch(self, train, loader, model, criterion, optimizer):
-        raise NotImplementedError("Subclasses must implement it")
 
-
+    # create model
     def create_model_from_params(self, params):
         raise NotImplementedError
-
-
-    #-------------------------------------------------------------------------
 
     # loaders
     def create_loaders(self, batch_size):
@@ -45,9 +39,6 @@ class BaseTrainer:
         val_loader = DataLoader(self.val_ds, batch_size=batch_size, shuffle=False)
         return train_loader, val_loader
 
-
-
-    #-------------------------------------------------------------------------
 
     # conf. optimizer, I can override it in the subclasses if i need it
     def configure_optimizer(self, model, params):
@@ -68,6 +59,46 @@ class BaseTrainer:
             patience = params.get("patience", 2),
             min_lr = params.get("min_lr", 1e-6)
         )
+
+
+    # ------------------------------------------------------------#
+
+    def _step(self, batch, model, criterion):
+        """ Model-specific forward + loss logic """
+        raise NotImplementedError("Subclasses must implement it")
+
+
+
+    def train_epoch(self, loader, model, criterion, optimizer):
+        model.train()
+        total_loss = 0
+
+        for batch in loader:
+            batch = batch.to(self.device)
+
+            optimizer.zero_grad()
+            loss = self._step(batch, model, criterion)
+
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+
+            total_loss += loss.item() * batch.num_graphs
+
+        return total_loss / len(loader.dataset)
+
+
+    def val_epoch(self, loader, model, criterion):
+        model.eval()
+        total_loss = 0
+
+        with torch.no_grad():
+            for batch in loader:
+                batch = batch.to(self.device)
+                loss = self._step(batch, model, criterion)
+                total_loss += loss.item() * batch.num_graphs
+
+        return total_loss / len(loader.dataset)
 
 
 
@@ -114,9 +145,8 @@ class BaseTrainer:
             # store epoch (useful for ex. to know which was my best epoch)
             self.current_epoch = epoch
 
-            train_loss = self.run_epoch(True, train_loader, model, criterion, optimizer)
-            val_loss = self.run_epoch(False, val_loader, model, criterion)
-
+            train_loss = self.train_epoch(train_loader, model, criterion, optimizer)
+            val_loss = self.val_epoch(val_loader, model, criterion)
 
             train_losses.append(train_loss)
             val_losses.append(val_loss)
@@ -183,6 +213,4 @@ class BaseTrainer:
             )
 
 
-    
 
-# https://chatgpt.com/c/6930c0c8-5764-8329-96d5-72f43a5b31d4

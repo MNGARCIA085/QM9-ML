@@ -125,8 +125,10 @@ class BaseTrainer:
 
         # ---- early stopping and model checkpoint  ----
         early_stop = EarlyStopping(patience=self.patience, mode="min")
-        ckpt_path = tempfile.mktemp(suffix=".pt") # creates something like /tmp/tmpabcd1234.pt, goal: avoid collisions
-        ckpt = ModelCheckpoint(ckpt_path, mode="min") 
+        
+        #ckpt_path = tempfile.mktemp(suffix=".pt") # creates something like /tmp/tmpabcd1234.pt, goal: avoid collisions
+        ckpt_path = tempfile.NamedTemporaryFile(delete=False, suffix=".pt").name #; not used mktemp (race conditions)
+        ckpt = ModelCheckpoint(ckpt_path, mode="min")
 
 
         train_losses = []
@@ -148,8 +150,7 @@ class BaseTrainer:
             val_losses.append(val_loss)
 
             # if i want a history per metric I can write a fn. eval_one_epcoch and calculate metrics
-
-            print(f"[BEST MODEL] Epoch {epoch+1}/{epochs} | train={train_loss:.4f} | val={val_loss:.4f}")
+            print(f"Epoch {epoch+1}/{epochs} | train={train_loss:.4f} | val={val_loss:.4f}")
 
 
             # ---- 1) LR Scheduler ----
@@ -163,6 +164,7 @@ class BaseTrainer:
             # ---- 2) Checkpoint ----
             is_best = ckpt.step(val_loss, model)
             if is_best:
+                print(f"[BEST MODEL] Epoch {epoch+1}/{epochs} | train={train_loss:.4f} | val={val_loss:.4f}")
                 print("Checkpoint updated")
 
 

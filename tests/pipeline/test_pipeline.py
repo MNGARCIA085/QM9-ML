@@ -4,6 +4,10 @@ from omegaconf import OmegaConf
 from qm9_ml.preprocessors.registry import PreprocessorRegistry
 from qm9_ml.training.registry import TrainerRegistry
 from qm9_ml.tuning.registry import TuningRegistry
+from qm9_ml.inference.registry import PredictorRegistry
+
+
+from qm9_ml.utils.metrics import compute_metrics
 
 
 @pytest.fixture
@@ -96,12 +100,15 @@ def test_full_pipeline_integration(tiny_cfg, tiny_tuning_cfg):
     # --------------------------------------------------
     trainer = TrainerRegistry.create(
         tiny_cfg.model_type,
+        
+    )
+
+    results = trainer.train(
+        best_params,
         train_ds=train_ds,
         val_ds=val_ds,
         epochs=tiny_cfg.shared.epochs,
     )
-
-    results = trainer.train(best_params)
 
     assert isinstance(results, dict)
     assert len(results) > 0
@@ -110,13 +117,28 @@ def test_full_pipeline_integration(tiny_cfg, tiny_tuning_cfg):
     model = results.get("model", None)
     assert model is not None, "Trainer should return the trained model."
 
+
+
+    
     # --------------------------------------------------
-    # EVALUATE FINAL MODEL (NEW CHECK)
+    # EVALUATE FINAL MODEL 
     # --------------------------------------------------
-    metrics = trainer.evaluate(test_ds, model)
+    predictor = PredictorRegistry.create(
+            tiny_cfg.model_type,
+            model=model,
+        )
+    y_true, y_pred = predictor.predict_with_targets(test_ds)
+
+    # metrics
+    metrics = compute_metrics(y_true, y_pred)
+
+
+
+    #metrics = trainer.evaluate(test_ds, model)
 
     assert isinstance(metrics, dict), "evaluate() should return a dict of metrics."
     assert len(metrics) > 0, "Evaluation metrics dict should not be empty."
+    
 
 
 

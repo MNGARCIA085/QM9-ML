@@ -44,26 +44,6 @@ def test_create_model_from_params():
     assert isinstance(model, nn.Module)
 
 
-def test_get_predictions():
-    trainer = MLPTrainer(device="cpu")
-    loader = DataLoader(make_dataset(4), batch_size=1, shuffle=False)
-    model = MockMLP(hidden=8)
-
-    trues, preds = trainer.get_predictions(loader, model)
-
-    assert trues.shape == preds.shape == torch.Size([4])
-    assert trues.ndim == preds.ndim == 1
-
-
-def test_predict():
-    trainer = MLPTrainer(device="cpu")
-    loader = DataLoader(make_dataset(3), batch_size=1, shuffle=False)
-    model = MockMLP(hidden=8)
-
-    preds = trainer.predict(loader, model)
-
-    assert preds.shape == torch.Size([3])
-    assert preds.ndim == 1
 
 
 def test_run_epoch_train():
@@ -74,8 +54,7 @@ def test_run_epoch_train():
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    loss = trainer.run_epoch(
-        train=True,
+    loss = trainer.train_epoch(
         loader=loader,
         model=model,
         criterion=criterion,
@@ -93,8 +72,7 @@ def test_run_epoch_eval():
     model = MockMLP(hidden=8)
     criterion = nn.MSELoss()
 
-    loss = trainer.run_epoch(
-        train=False,
+    loss = trainer.val_epoch(
         loader=loader,
         model=model,
         criterion=criterion,

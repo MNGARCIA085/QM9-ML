@@ -107,7 +107,7 @@ def test_schnet_tuner_full_trial():
 
 
 
-"""
+
 def test_schnet_tuner_runs(prep_small):
     train_ds, val_ds = prep_small.preprocess()
 
@@ -128,4 +128,3 @@ def test_schnet_tuner_runs(prep_small):
     assert isinstance(trials, list)
     assert "lr" in params
     assert len(trials) == 1
-"""

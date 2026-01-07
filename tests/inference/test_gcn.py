@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
-from qm9_ml.training.gcn import GCNTrainer
+from qm9_ml.inference.gcn import GCNPredictor
 
 
 # ---------------------------------------------------------
@@ -35,47 +35,30 @@ class MockGCN(nn.Module):
         return out
 
 
-# ---------------------------------------------------------
-# Tests
-# ---------------------------------------------------------
 
-def test_create_model_from_params():
-    trainer = GCNTrainer(device="cpu")
-    model = trainer.create_model_from_params({"hidden": 16})
-    assert isinstance(model, nn.Module)
+#-------------------------------------------------------------------------------#
 
 
-def test_run_epoch_train():
-    trainer = GCNTrainer(device="cpu")
-    loader = DataLoader(make_dataset(5), batch_size=1, shuffle=False)
-
+def test_get_predictions():
+    loader = DataLoader(make_dataset(4), batch_size=1, shuffle=False)
     model = MockGCN(hidden=16)
-    criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    
+    predictor = GCNPredictor(model=model, device="cpu")
+    
 
-    loss = trainer.train_epoch(
-        loader=loader,
-        model=model,
-        criterion=criterion,
-        optimizer=optimizer,
-    )
+    trues, preds = predictor.predict_with_targets(loader)
 
-    assert isinstance(loss, float)
-    assert loss > 0
+    assert trues.shape == preds.shape == torch.Size([4])
+    assert trues.ndim == preds.ndim == 1
 
 
-def test_run_epoch_eval():
-    trainer = GCNTrainer(device="cpu")
-    loader = DataLoader(make_dataset(5), batch_size=1, shuffle=False)
-
+def test_predict():
+    loader = DataLoader(make_dataset(3), batch_size=1, shuffle=False)
     model = MockGCN(hidden=16)
-    criterion = nn.MSELoss()
 
-    loss = trainer.val_epoch(
-        loader=loader,
-        model=model,
-        criterion=criterion,
-    )
+    predictor = GCNPredictor(model=model, device="cpu")
+    
+    preds = predictor.predict(loader)
 
-    assert isinstance(loss, float)
-    assert loss > 0
+    assert preds.shape == torch.Size([3])
+    assert preds.ndim == 1

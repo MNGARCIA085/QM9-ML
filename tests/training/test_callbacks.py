@@ -53,26 +53,27 @@ def test_early_stopping(monkeypatch):
         "num_interactions": 2,
     }
 
-    trainer = SchNetTrainer(train_ds=train_ds, val_ds=val_ds, epochs=40)
+    trainer = SchNetTrainer()
 
-    def fake_run_epoch(train, loader, model, criterion, optimizer=None):
+    def fake_train_epoch(train, loader, model, criterion, optimizer=None):
         #return val_losses.pop(0)
         return 0.123 # dummy data, never improves
 
 
-    def fake_eval(loader, model):
-        return 0.5
+    def fake_val_epoch(loader, model, criterion):
+        return 0.5  # constant val loss → no improvement
 
     monkeypatch.setattr(
-        trainer, "run_epoch", fake_run_epoch, raising=True
+        trainer, "train_epoch", fake_train_epoch, raising=True
     )
+
     monkeypatch.setattr(
-        trainer, "evaluate", fake_eval, raising=True
+        trainer, "val_epoch", fake_val_epoch, raising=True
     )
 
     trainer.patience = 2
 
-    trainer.train(params)
+    trainer.train(params, train_ds=train_ds, val_ds=val_ds, epochs=40)
 
     # Should not reach patience+1 epochs
     assert trainer.current_epoch < (trainer.patience+1)

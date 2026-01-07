@@ -47,9 +47,9 @@ class MLPTuner(BaseTuner):
         lr = trial.suggest_float("lr", lr_low, lr_high, log=True)
 
 
-        trainer = self.trainer_cls(self.train_ds, self.val_ds)
+        trainer = self.trainer_cls(device=self.device)
 
-        train_loader, val_loader = trainer.create_loaders(batch_size)
+        train_loader, val_loader = trainer.create_loaders(self.train_ds, self.val_ds, batch_size)
 
 
         model = self.create_model(trial, hidden_opts)

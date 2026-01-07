@@ -57,12 +57,10 @@ def main(cfg: DictConfig):
     # train best model
     trainer = TrainerRegistry.create(
             model_type,
-            train_ds=train_ds,
-            val_ds=val_ds,
             epochs=cfg.shared.epochs,
         )
 
-    results = trainer.train(best_params)
+    results = trainer.train(best_params, train_ds, val_ds)
 
     # compute metrics
     predictor = PredictorRegistry.create(model_type, model=results['model'])

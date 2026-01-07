@@ -7,8 +7,8 @@ from qm9_ml.models.mlp import SimpleMLP
 
 @TrainerRegistry.register("mlp")
 class MLPTrainer(BaseTrainer):
-    def __init__(self, train_ds=None, val_ds=None, test_ds=None, epochs=10, device=None, **kwargs):
-        super().__init__(train_ds, val_ds, test_ds, epochs=epochs, device=device)
+    def __init__(self, epochs=10, device=None, **kwargs):
+        super().__init__(epochs=epochs, device=device)
 
 
     # create model

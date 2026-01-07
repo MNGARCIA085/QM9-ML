@@ -18,10 +18,10 @@ from .callbacks.lr_schedulers import get_plateau_scheduler
 
 
 class BaseTrainer:
-    def __init__(self, train_ds=None, val_ds=None, test_ds=None, epochs=10, device=None):
-        self.train_ds = train_ds
-        self.val_ds = val_ds
-        self.test_ds = test_ds
+    def __init__(self, epochs=10, device=None):
+        #self.train_ds = train_ds
+        #self.val_ds = val_ds
+        #self.test_ds = test_ds
         self.epochs = epochs  
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.current_epoch = 0
@@ -34,9 +34,9 @@ class BaseTrainer:
         raise NotImplementedError
 
     # loaders
-    def create_loaders(self, batch_size):
-        train_loader = DataLoader(self.train_ds, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(self.val_ds, batch_size=batch_size, shuffle=False)
+    def create_loaders(self, train_ds, val_ds, batch_size):
+        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+        val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
         return train_loader, val_loader
 
 
@@ -103,7 +103,7 @@ class BaseTrainer:
 
 
     # train
-    def train(self, params): 
+    def train(self, params, train_ds, val_ds): 
 
         # params: schnet ex:{'batch_size': 16, 'lr': .., 'hidden_channels': 256, 'num_filters': 128, 'num_interactions': 4}
         # those the ones I use for tuning, but i also have some fixed (limited resources) like cutoff
@@ -113,7 +113,7 @@ class BaseTrainer:
         """
 
         # Loaders
-        train_loader, val_loader = self.create_loaders(params["batch_size"])
+        train_loader, val_loader = self.create_loaders(train_ds, val_ds, params["batch_size"])
 
         # Rebuild best model (subclasses must implement create_model_from_params)
         model = self.create_model_from_params(params)

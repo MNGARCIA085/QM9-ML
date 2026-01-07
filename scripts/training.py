@@ -37,12 +37,10 @@ def main(cfg: DictConfig):
     # train 
     trainer = TrainerRegistry.create(
             model_type,
-            train_ds=train_ds,
-            val_ds=val_ds,
             epochs=cfg.shared.epochs,
         )
 
-    results = trainer.train(cfg_training)
+    results = trainer.train(cfg_training, train_ds, val_ds)
 
 
     # compute metrics

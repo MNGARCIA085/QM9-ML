@@ -18,7 +18,6 @@ class SchNetTuner(BaseTuner):
 
     def __init__(self, train_ds, val_ds, epochs_trials=5, device=None, **kwargs):
         super().__init__(train_ds, val_ds, epochs_trials=epochs_trials, device=device)
-
     
 
     # ---------------------------------------------------------
@@ -57,13 +56,13 @@ class SchNetTuner(BaseTuner):
 
         # Optuna sampling
         batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
-        lr = trial.suggest_loguniform("lr", lr_low, lr_high)
+        lr = trial.suggest_float("lr", lr_low, lr_high, log=True)
 
         # trainer
-        trainer = self.trainer_cls(self.train_ds, self.val_ds) # maybe pass device if needed
+        trainer = self.trainer_cls(device=self.device)
 
-        # loaders
-        train_loader, val_loader = trainer.create_loaders(batch_size)
+        # Loaders are created every time to account for cases where I want to tune the batch size.
+        train_loader, val_loader = trainer.create_loaders(self.train_ds, self.val_ds, batch_size)
 
         # model
         model = self.create_model(

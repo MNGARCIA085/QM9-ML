@@ -42,13 +42,13 @@ class GCNTuner(BaseTuner):
         lr_high = kwargs.get("lr", {}).get("high", 1e-2)
 
         batch_size = trial.suggest_categorical("batch_size", batch_size_opts)
-        lr = trial.suggest_loguniform("lr", lr_low, lr_high)
+        lr = trial.suggest_float("lr", lr_low, lr_high, log=True)
 
         # trainer
-        trainer = self.trainer_cls(self.train_ds, self.val_ds) 
+        trainer = self.trainer_cls(device=self.device) 
 
         # loaders
-        train_loader, val_loader = trainer.create_loaders(batch_size)
+        train_loader, val_loader = trainer.create_loaders(self.train_ds, self.val_ds, batch_size)
 
         # model, optimizer, criterion
         model = self.create_model(trial, hidden_opts=hidden_opts)

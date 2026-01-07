@@ -18,11 +18,7 @@ from .callbacks.lr_schedulers import get_plateau_scheduler
 
 
 class BaseTrainer:
-    def __init__(self, epochs=10, device=None):
-        #self.train_ds = train_ds
-        #self.val_ds = val_ds
-        #self.test_ds = test_ds
-        self.epochs = epochs  
+    def __init__(self, device=None):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.current_epoch = 0
         self.patience = 30 # for early stopping
@@ -103,7 +99,7 @@ class BaseTrainer:
 
 
     # train
-    def train(self, params, train_ds, val_ds): 
+    def train(self, params, train_ds, val_ds, epochs=10): 
 
         # params: schnet ex:{'batch_size': 16, 'lr': .., 'hidden_channels': 256, 'num_filters': 128, 'num_interactions': 4}
         # those the ones I use for tuning, but i also have some fixed (limited resources) like cutoff
@@ -140,7 +136,7 @@ class BaseTrainer:
         final_lr = None
 
 
-        for epoch in range(self.epochs):
+        for epoch in range(epochs):
 
             # store epoch (useful for ex. to know which was my best epoch)
             self.current_epoch = epoch
@@ -153,7 +149,7 @@ class BaseTrainer:
 
             # if i want a history per metric I can write a fn. eval_one_epcoch and calculate metrics
 
-            print(f"[BEST MODEL] Epoch {epoch+1}/{self.epochs} | train={train_loss:.4f} | val={val_loss:.4f}")
+            print(f"[BEST MODEL] Epoch {epoch+1}/{epochs} | train={train_loss:.4f} | val={val_loss:.4f}")
 
 
             # ---- 1) LR Scheduler ----
@@ -189,7 +185,7 @@ class BaseTrainer:
         # all hyperparams
         hyperparams = {
             **model.config,     # unpack existing config
-            "epochs": self.epochs,
+            "epochs": epochs,
             "final_epochs": final_epoch,
             "final_lr": final_lr,
             "lr": params["lr"],

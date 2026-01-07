@@ -9,8 +9,8 @@ from qm9_ml.utils.metrics import compute_metrics
 
 @TrainerRegistry.register("schnet")
 class SchNetTrainer(BaseTrainer):
-    def __init__(self, epochs=10, device=None, **kwargs):
-        super().__init__(epochs=epochs, device=device)
+    def __init__(self, device=None, **kwargs):
+        super().__init__(device=device)
 
 
     # create model

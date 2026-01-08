@@ -216,3 +216,4 @@ multirun/
 
 # MLflow
 mlruns/
+mlflow.db

@@ -4,7 +4,7 @@ from omegaconf import DictConfig, OmegaConf
 from qm9_ml.preprocessors.registry import PreprocessorRegistry
 from qm9_ml.training.registry import TrainerRegistry
 from qm9_ml.inference.registry import PredictorRegistry
-from qm9_ml.utils.logging import logging, select_best_model, export_best_model
+from qm9_ml.utils.logging import logging
 from qm9_ml.utils.metrics import compute_metrics
 
 
@@ -59,15 +59,9 @@ def main(cfg: DictConfig):
     # logging
     logging(cfg.exp_name, cfg.run_training_name, artifacts, results, model_type)
 
-    # select and then save best model (simplistic way: always expport the best)
-    res = select_best_model('qm9')
-    best_run_id = res['run_id'] # maybe add later model_type
-    export_best_model(
-        run_id=best_run_id,
-        dst="../api-repo/models/best_model"
-    )
-    
 
+    
+    
 
 if __name__ == "__main__":
     main()

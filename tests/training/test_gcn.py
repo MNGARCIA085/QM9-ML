@@ -6,38 +6,6 @@ from torch_geometric.loader import DataLoader
 from qm9_ml.training.gcn import GCNTrainer
 
 
-# ---------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------
-
-def make_dataset(num_graphs=5, hidden=16):
-    """
-    Creates a list of real PyG Data objects so DataLoader works correctly.
-    """
-    dataset = []
-    for _ in range(num_graphs):
-        x = torch.rand(10, hidden)               # node features
-        edge_index = torch.tensor([[0, 1], [1, 0]], dtype=torch.long)  # trivial edges
-        y = torch.rand(1)                        # graph-level target
-        dataset.append(Data(x=x, edge_index=edge_index, y=y))
-    return dataset
-
-
-# Mock model (same idea as SimpleGCN, but extremely minimal)
-class MockGCN(nn.Module):
-    def __init__(self, hidden=16):
-        super().__init__()
-        self.lin = nn.Linear(hidden, 1)
-
-    def forward(self, data):
-        # simple graph-level prediction = mean over node features
-        out = self.lin(data.x).mean(dim=0, keepdim=True)  # [1,1]
-        return out
-
-
-# ---------------------------------------------------------
-# Tests
-# ---------------------------------------------------------
 
 def test_create_model_from_params():
     trainer = GCNTrainer(device="cpu")
@@ -45,11 +13,11 @@ def test_create_model_from_params():
     assert isinstance(model, nn.Module)
 
 
-def test_run_epoch_train():
+def test_run_epoch_train(dataset_gcn, mock_gcn):
     trainer = GCNTrainer(device="cpu")
-    loader = DataLoader(make_dataset(5), batch_size=1, shuffle=False)
+    loader = DataLoader(dataset_gcn(5), batch_size=1, shuffle=False)
 
-    model = MockGCN(hidden=16)
+    model = mock_gcn
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
@@ -64,11 +32,11 @@ def test_run_epoch_train():
     assert loss > 0
 
 
-def test_run_epoch_eval():
+def test_run_epoch_eval(dataset_gcn, mock_gcn):
     trainer = GCNTrainer(device="cpu")
-    loader = DataLoader(make_dataset(5), batch_size=1, shuffle=False)
+    loader = DataLoader(dataset_gcn(5), batch_size=1, shuffle=False)
 
-    model = MockGCN(hidden=16)
+    model = mock_gcn
     criterion = nn.MSELoss()
 
     loss = trainer.val_epoch(

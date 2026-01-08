@@ -1,32 +1,14 @@
 import torch
-from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
-
 from qm9_ml.training.schnet import SchNetTrainer
 
-
-# ------------------------------------------------------------
-# Helper: create tiny synthetic SchNet-style dataset
-# ------------------------------------------------------------
-def make_synthetic_schnet_dataset(num_samples=20, num_nodes=5):
-    dataset = []
-    for _ in range(num_samples):
-        pos = torch.randn(num_nodes, 3)          # Positions
-        z = torch.randint(1, 10, (num_nodes,))   # Atomic numbers
-        y = torch.randn(1)                       # Scalar property
-
-        # SchNet does NOT require edge_index explicitly
-        data = Data(pos=pos, z=z, y=y, num_nodes=num_nodes)
-        dataset.append(data)
-
-    return dataset
 
 
 # ------------------------------------------------------------
 # Test: run_epoch
 # ------------------------------------------------------------
-def test_schnet_train_epoch():
-    train_ds = make_synthetic_schnet_dataset(10, 6)
+def test_schnet_train_epoch(dataset_schnet):
+    train_ds = dataset_schnet(10, 6)
     train_loader = DataLoader(train_ds, batch_size=4)
 
     params = {
@@ -54,9 +36,9 @@ def test_schnet_train_epoch():
 # ------------------------------------------------------------
 # Test: full training loop (train_best_model)
 # ------------------------------------------------------------
-def test_schnet_train_best_model_runs():
-    train_ds = make_synthetic_schnet_dataset(20, 6)
-    val_ds = make_synthetic_schnet_dataset(10, 6)
+def test_schnet_train_best_model_runs(dataset_schnet):
+    train_ds = dataset_schnet(20, 6)
+    val_ds = dataset_schnet(10, 6)
 
     params = {
         "lr": 1e-3,
@@ -75,12 +57,6 @@ def test_schnet_train_best_model_runs():
     # losses recorded
     assert len(result["train"]["losses"]) <= 3
     assert len(result["val"]["losses"]) <= 3
-
-
-
-    # metrics exist (change to new place)
-    #assert "metrics" in result["train"]
-    #assert "metrics" in result["val"]
 
     # hyperparams returned
     assert "epochs" in result["hyperparams"]
@@ -120,69 +96,3 @@ def test_configure_optimizer():
 
 
 
-"""
-✔ They test the real SchNetTrainer (not a dummy)
-
-real forward pass
-
-real gradients
-
-real DataLoader behavior
-
-real SchNetRegressor
-
-✔ They run extremely fast
-
-tiny datasets
-
-tiny model
-
-only a few epochs
-
-✔ They validate behavior, not numerical accuracy
-
-ensures your training loop does not break
-
-ensures model training flows end-to-end
-
-ensures outputs have correct shapes
-
-ensures all trainer hooks work
-
-✔ They remain robust
-
-Because we construct synthetic, valid SchNet data instead of depending on your full preprocessing pipeline.
-"""
-
-
-
-"""
-def test_trainer_single_epoch(trainer):
-    train_loader, val_loader = trainer.create_loaders(batch_size=8)
-
-    model = SchNetRegressor().to("cpu")
-    optimizer = Adam(model.parameters(), lr=1e-3)
-    criterion = nn.MSELoss()
-
-    # Run one training epoch
-    loss = trainer.run_epoch(True, train_loader, model, criterion, optimizer)
-    assert torch.isfinite(torch.tensor(loss))
-
-
-def test_trainer_evaluate(trainer):
-    train_loader, val_loader = trainer.create_loaders(batch_size=8)
-
-    model = SchNetRegressor().to("cpu")
-    optimizer = Adam(model.parameters(), lr=1e-3)
-    criterion = nn.MSELoss()
-
-    # One epoch so model is not totally random
-    trainer.run_epoch(True, train_loader, model, criterion, optimizer)
-
-    metrics = trainer.evaluate(val_loader, model)
-
-    assert isinstance(metrics, dict)
-    assert "mse" in metrics or "loss" in metrics
-    for k, v in metrics.items():
-        assert torch.isfinite(torch.tensor(v))
-"""

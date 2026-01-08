@@ -1,10 +1,7 @@
 from .base import BaseTrainer
 import torch
-import torch.optim as optim
 from .registry import TrainerRegistry
 from qm9_ml.models.schnet import SchNetRegressor
-from qm9_ml.utils.metrics import compute_metrics
-
 
 
 @TrainerRegistry.register("schnet")
@@ -19,7 +16,7 @@ class SchNetTrainer(BaseTrainer):
             hidden_channels=params["hidden_channels"],
             num_filters=params["num_filters"],
             num_interactions=params["num_interactions"]
-        ).to(self.device)  # later cutoff
+        ).to(self.device)  # later cutoff too
 
 
     # override optimizer

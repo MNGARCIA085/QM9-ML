@@ -1,6 +1,4 @@
 from .base import BaseTrainer
-import torch
-import torch.optim as optim
 from .registry import TrainerRegistry
 from qm9_ml.models.mlp import SimpleMLP
 

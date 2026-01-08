@@ -1,15 +1,6 @@
-class PredictorRegistry:
+from qm9_ml.core.registry import BaseRegistry
+from qm9_ml.inference.base import BasePredictor
+
+class PredictorRegistry(BaseRegistry):
     _registry = {}
-
-    @classmethod
-    def register(cls, name):
-        def decorator(tun_cls):
-            cls._registry[name] = tun_cls
-            return tun_cls
-        return decorator
-
-    @classmethod
-    def create(cls, name, **kwargs):
-        if name not in cls._registry:
-            raise ValueError(f"Unknown predictor: {name}")
-        return cls._registry[name](**kwargs)
+    base_cls = BasePredictor

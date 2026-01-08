@@ -1,20 +1,6 @@
-class TuningRegistry:
+from qm9_ml.core.registry import BaseRegistry
+from qm9_ml.tuning.base import BaseTuner
+
+class TuningRegistry(BaseRegistry):
     _registry = {}
-
-    @classmethod
-    def register(cls, name):
-        def decorator(tun_cls):
-            cls._registry[name] = tun_cls
-            return tun_cls
-        return decorator
-
-    @classmethod
-    def create(cls, name, **kwargs):
-        if name not in cls._registry:
-            raise ValueError(f"Unknown tuner: {name}")
-        return cls._registry[name](**kwargs)
-
-
-    @classmethod
-    def get(cls, name):
-        return cls._registry.get(name, None)
+    base_cls = BaseTuner

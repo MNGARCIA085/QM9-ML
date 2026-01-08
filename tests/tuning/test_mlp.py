@@ -1,8 +1,8 @@
 import torch
 import optuna
 from torch_geometric.data import Data
-from qm9_ml.tuning.mlp import MLPTuner
 from qm9_ml.tuning.registry import TuningRegistry
+from qm9_ml.tuning.mlp import MLPTuner
 
 
 # -----------------------
@@ -30,8 +30,9 @@ def make_dummy_mlp_dataset(n=10):
 # Registry test
 # -----------------------
 def test_mlp_tuner_is_registered():
-    assert "mlp" in TuningRegistry._registry
-    assert TuningRegistry.get("mlp") is MLPTuner
+    assert "mlp" in TuningRegistry.available()
+    assert TuningRegistry._registry["mlp"] is MLPTuner
+
 
 
 # -----------------------

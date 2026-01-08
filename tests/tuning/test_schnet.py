@@ -3,9 +3,22 @@ import torch
 import optuna
 from torch_geometric.data import Data
 
-from qm9_ml.tuning.schnet import SchNetTuner
-from qm9_ml.tuning.registry import TuningRegistry
 
+from qm9_ml.preprocessors.schnet import SchNetPreprocessor
+from qm9_ml.tuning.registry import TuningRegistry
+from qm9_ml.tuning.schnet import SchNetTuner
+
+
+
+
+
+# ---------------------------------------------------------
+# Ficture
+# ---------------------------------------------------------
+@pytest.fixture
+def prep_small():
+    """Small preprocessing fixture for fast tests."""
+    return SchNetPreprocessor(target=7, subset=80, seed=123)
 
 
 # ---------------------------------------------------------
@@ -27,8 +40,9 @@ def tiny_dataset(n=10):
 # 1. Registry test
 # ---------------------------------------------------------
 def test_schnet_tuner_is_registered():
-    assert "schnet" in TuningRegistry._registry
-    assert TuningRegistry.get("schnet") is SchNetTuner
+    assert "schnet" in TuningRegistry.available()
+    assert TuningRegistry._registry["schnet"] is SchNetTuner
+
 
 
 
@@ -107,15 +121,17 @@ def test_schnet_tuner_full_trial():
 
 
 
-
+# ---------------------------------------------------------
+# 5. Tune
+# ---------------------------------------------------------
 def test_schnet_tuner_runs(prep_small):
     train_ds, val_ds = prep_small.preprocess()
 
     tuner = SchNetTuner(train_ds, val_ds, epochs_trials=1, device="cpu")
 
     # Small search space so it runs fast
-    params, attrs, trials = tuner.tune(
-        n_trials=1,
+    params, attrs, trials, importances = tuner.tune(
+        n_trials=2,
         hidden_channels_opts=[16],
         num_filters_opts=[16],
         num_interactions={"low": 2, "high": 2},
@@ -127,4 +143,4 @@ def test_schnet_tuner_runs(prep_small):
     assert isinstance(attrs, dict)
     assert isinstance(trials, list)
     assert "lr" in params
-    assert len(trials) == 1
+    assert len(trials) == 2

@@ -1,15 +1,7 @@
-class TrainerRegistry:
+from qm9_ml.core.registry import BaseRegistry
+from qm9_ml.training.base import BaseTrainer # not sctrictly needed but gives structural guarantees
+
+class TrainerRegistry(BaseRegistry):
     _registry = {}
+    base_cls = BaseTrainer
 
-    @classmethod
-    def register(cls, name):
-        def decorator(tun_cls):
-            cls._registry[name] = tun_cls
-            return tun_cls
-        return decorator
-
-    @classmethod
-    def create(cls, name, **kwargs):
-        if name not in cls._registry:
-            raise ValueError(f"Unknown trainer: {name}")
-        return cls._registry[name](**kwargs)

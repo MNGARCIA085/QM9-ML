@@ -1,13 +1,5 @@
-from .base import BaseTrainer
-import torch
-import torch.optim as optim
-import torch.nn as nn
-from qm9_ml.models.schnet import SchNetRegressor
-from qm9_ml.utils.metrics import compute_metrics
 from .registry import TrainerRegistry
-from torch_geometric.data import Data
-from torch_geometric.loader import DataLoader
-
+from .base import BaseTrainer
 from qm9_ml.models.gcn import SimpleGCN
 
 

@@ -1,9 +1,8 @@
 import torch
 import optuna
 from torch_geometric.data import Data
-from qm9_ml.tuning.gcn import GCNTuner
 from qm9_ml.tuning.registry import TuningRegistry
-
+from qm9_ml.tuning.gcn import GCNTuner
 
 # -----------------------
 # Helper dataset
@@ -37,8 +36,10 @@ def make_dummy_gcn_dataset(n=10):
 # Registry test
 # -----------------------
 def test_gcn_tuner_is_registered():
-    assert "gcn" in TuningRegistry._registry
-    assert TuningRegistry.get("gcn") is GCNTuner
+    assert "gcn" in TuningRegistry.available()
+    assert TuningRegistry._registry["gcn"] is GCNTuner
+
+
 
 
 # -----------------------

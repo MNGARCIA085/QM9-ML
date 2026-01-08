@@ -3,30 +3,7 @@ from torch_geometric.data import Data
 import pytest
 
 
-"""
-Original data example
-
-
-Data(x=[5, 11], edge_index=[2, 8], edge_attr=[8, 4], y=[1, 19], pos=[5, 3], z=[5], smiles='[H]C([H])([H])[H]', name='gdb_1', idx=[1])
-
-Data(
-    x=[N, 11],
-    pos=[N, 3],
-    z=[N],
-    edge_index=[2, E],
-    edge_attr=[E, 4],
-    y=[1, 19],           <-- IMPORTANT: global targets, NOT per-node
-    smiles=...,
-    name=...,
-    idx=[1]
-)
-
-
-"""
-
-
-
-
+# data example
 @pytest.fixture
 def qm9_like_sample():
     num_nodes = 5
@@ -48,12 +25,7 @@ def qm9_like_sample():
 
 
 
-
-
-# tests/conftest.py
-import torch
-from torch_geometric.data import Data
-
+# dummy dataset
 class DummyDataset:
     """Dataset that mimics QM9 behavior."""
     def __init__(self, root, transform=None):
@@ -107,7 +79,26 @@ class DummyDataset:
 
 
 """
-after prep
+
+Original data example
+
+
+Data(x=[5, 11], edge_index=[2, 8], edge_attr=[8, 4], y=[1, 19], pos=[5, 3], z=[5], smiles='[H]C([H])([H])[H]', name='gdb_1', idx=[1])
+
+Data(
+    x=[N, 11],
+    pos=[N, 3],
+    z=[N],
+    edge_index=[2, E],
+    edge_attr=[E, 4],
+    y=[1, 19],           <-- IMPORTANT: global targets, NOT per-node
+    smiles=...,
+    name=...,
+    idx=[1]
+)
+
+
+-> after prep
 
 Data(
     x=[num_nodes, num_node_features]   # QM9 uses 11 features → x=[N,11]

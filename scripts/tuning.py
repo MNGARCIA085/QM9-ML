@@ -14,10 +14,10 @@ from qm9_ml.utils.metrics import compute_metrics
 @hydra.main(config_path="../config", config_name="config", version_base=None)
 def main(cfg: DictConfig):
     # get model type (nn, tree.....)
-    model_type = cfg.model_type
+    model_type = cfg.model_type.name
     print(f"\nSelected model: {model_type}")
 
-    cfg_tuning = OmegaConf.load(f"config/tuning/{model_type}.yaml")
+    #cfg_tuning = OmegaConf.load(f"config/tuning/{model_type}.yaml")
 
     #print("Registry:", PreprocessorRegistry._registry), registry check
 
@@ -29,13 +29,6 @@ def main(cfg: DictConfig):
         subset=cfg.preprocessor.subset,
     )
     train_ds, val_ds = prep.preprocess()
-
-    print(type(train_ds))
-
-    for x in train_ds:
-        print(x)
-        break
-
 
     artifacts = prep.get_artifacts() # for later logging
 
@@ -50,7 +43,7 @@ def main(cfg: DictConfig):
 
 
     best_params, attrs, trials_data, importances = tuner.tune(n_trials=cfg.shared.num_trials,
-                                    **cfg_tuning,
+                                    **cfg.model_type.tuning,
                                     )
 
 

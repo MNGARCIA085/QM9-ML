@@ -7,7 +7,7 @@ from optuna.importance import get_param_importances
 
 class BaseTuner:
 
-    trainer_cls = None   # subclasses must define this; later wiy type is cleaner
+    trainer_cls = None   # subclasses must define this
     predictor_cls = None
 
     def __init__(self, train_ds, val_ds, batch_size=32, epochs_trials=5, device=None):
@@ -19,14 +19,6 @@ class BaseTuner:
         self.best_params = None
 
 
-    """
-    def _make_trainer(self):
-        return self.trainer_cls(
-            train_ds=self.train_ds,
-            val_ds=self.val_ds,
-            device=self.device,
-        )
-    """
 
     # objective
     def objective(self, trial, **kwargs):
@@ -37,16 +29,10 @@ class BaseTuner:
         study = optuna.create_study(direction="minimize")
         study.optimize(lambda trial: self.objective(trial, **kwargs), # to pass kwargs
                        n_trials=n_trials)
-
-
         print("Best params:", study.best_params)
+        
         best_attrs = study.best_trial.user_attrs # metrics are a key under this
         print("All metrics:", best_attrs)
-
-        
-        # store for later (MLflow, logging, checkpoints…)
-        self.best_params = study.best_params
-        self.best_attrs  = best_attrs   # metrics / extras (right now i just for my best trial for a few epochs)
 
         
         # trial data
@@ -64,16 +50,7 @@ class BaseTuner:
         importances = get_param_importances(study)
 
 
-
         # return
         return study.best_params, best_attrs, trials_data, importances
 
 
-
-
-    
-
-
-
-# inherirance + comnposition
-# https://gemini.google.com/app/9feb954ea942a21a?hl=es

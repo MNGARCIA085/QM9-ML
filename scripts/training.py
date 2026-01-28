@@ -1,6 +1,6 @@
 # Hydra + OmegaConf
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from qm9_ml.preprocessors.registry import PreprocessorRegistry
 from qm9_ml.training.registry import TrainerRegistry
 from qm9_ml.inference.registry import PredictorRegistry
@@ -12,16 +12,8 @@ from qm9_ml.utils.metrics import compute_metrics
 @hydra.main(config_path="../config", config_name="config", version_base=None)
 def main(cfg: DictConfig):
     # get model type (nn, tree.....)
-    model_type = cfg.model_type
+    model_type = cfg.model_type.name
     print(f"\nSelected model: {model_type}")
-
-
-    print(cfg)
-
-    # params for training; not really i can use cfg.training given how i execute the script
-    cfg_training = OmegaConf.load(f"config/training/{model_type}.yaml") 
-
-    print(cfg_training)
 
     # preprocessing
     prep = PreprocessorRegistry.create(
@@ -39,7 +31,7 @@ def main(cfg: DictConfig):
             model_type,
         )
 
-    results = trainer.train(cfg_training, train_ds, val_ds, cfg.shared.epochs)
+    results = trainer.train(cfg.model_type.training, train_ds, val_ds, cfg.shared.epochs)
 
 
     # compute metrics

@@ -1,0 +1,6 @@
+# this file ONLY selects defaults
+defaults:
+  - /tuning: schnet
+  - /training: schnet
+
+name: schnet
